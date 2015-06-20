@@ -1,35 +1,34 @@
-// 'module.exports' is a node.JS specific feature, it does not work with regular JavaScript
-var parser = require('./parser');
-
 module.exports = {
 	parseRule: function(rule) {
-// 		“url-filter” (string, mandatory): matches the resource’s URL.
-// “url-filter-is-case-sensitive”: (boolean, optional): changes the “url-filter” case-sensitivity.
-// “resource-type”: (array of strings, optional): matches how the resource will be used.
-// “load-type”: (array of strings, optional): matches the relation to the main resource.
-// “if-domain”/”unless-domain” (array of strings, optional): matches the domain of the document.
-		
-		var trigger = { "url-filter": rule.getUrlFilter() };
+		if (rule.isNotAComment()) {
+			var trigger = { "url-filter": rule.getUrlFilter() };
 
-		if (rule.hasResourceTypes()) {
-			trigger["resource-type"] = rule.getResourceTypes();
+			if (rule.hasOptions()) {
+				var options = rule.getOptions();
+				if (options.hasResourceTypes()) {
+					trigger["resource-type"] = options.getResourceTypes();
+				}
+
+				if (options.hasLoadType()) {
+					trigger["load-type"] = options.getLoadType();
+				}
+
+				if (options.hasDomains()) {
+					trigger[options.getTypeDomain()] = options.getDomains();
+				}
+			}
+			return trigger;
 		}
-
-		if (rule.hasLoadType()) {
-			trigger["load-type"] = rule.getLoadType();
-		}
-
-		if (rule.hasIfDomains()) {
-			trigger["if-domain"] = rule.getIfDomains();
-		}
-
-		if (rule.hasUnlessDomains()) {
-			trigger["unless-domain"] = rule.getUnlessDomains();
-		}
-
-		return trigger;
+		return null;
 	}
 };
+
+String.prototype.isNotAComment = function() {
+	if (this.length > 0 && this.charAt(0) != '!') {
+		return true;
+	}
+	return false;
+}
 
 String.prototype.replaceAll = function(str1, str2, ignore) {
     return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
@@ -38,6 +37,11 @@ String.prototype.replaceAll = function(str1, str2, ignore) {
 String.prototype.getUrlFilter = function() {
 	// Escape special regex characters
 	var urlFilter = this.replace(/[.$+?{}()\[\]\\]/g, "\\$&");
+
+	// Remove additional informations
+	if (urlFilter.indexOf("\$") > 0) {
+		urlFilter = urlFilter.substring(0, urlFilter.indexOf("\$") - 1);
+	}
 
 	// Separator character ^ matches anything but a letter, a digit, or one of the following: _ - . %. 
 	// The end of the address is also accepted as separator.
@@ -66,34 +70,92 @@ String.prototype.getUrlFilter = function() {
 	return urlFilter;
 }
 
-String.prototype.getResourceTypes = function() {
-	return "";
-}
-
-String.prototype.hasResourceTypes = function() {
+String.prototype.hasOptions = function() {
+	if (this.indexOf("\$") > 0) {
+		return true;
+	}
 	return false;
 }
 
-String.prototype.getLoadType = function() {
-	return "";
+String.prototype.getOptions = function() {
+	return this.substring(this.indexOf("\$") + 1).split(',');
 }
 
-String.prototype.hasLoadType = function() {
+Array.prototype.getResourceTypes = function() {
+	var resourceTypes = [];
+	for (var i = 0; i < this.length; i++) {
+		switch (this[i]) {
+		  	case "script":
+		  	case "image":
+		  		resourceTypes.push(this[i]);
+		  	case "stylesheet":
+		  		resourceTypes.push("style-sheet");
+		  	// TODO : Add other cases
+		  	default:
+		    	break;
+		}
+	}
+	return resourceTypes;
+}
+
+Array.prototype.hasResourceTypes = function() {
+	if (this.indexOf("script") > - 1 || this.indexOf("image") > - 1 || this.indexOf("stylesheet") > - 1 /* || this.indexOf("object") > - 1 || this.indexOf("object-subrequest") > - 1 || this.indexOf("subdocument") > - 1 */) {
+		return true;
+	}
 	return false;
 }
 
-String.prototype.getUnlessDomains = function() {
-	return "";
+Array.prototype.getLoadType = function() {
+	if (this.indexOf("third-party") > - 1) {
+		return "third-party";
+	} else { // "~third-party"
+		return "first-party";
+	}
 }
 
-String.prototype.hasUnlessDomains = function() {
+Array.prototype.hasLoadType = function() {
+	if (this.indexOf("third-party") > - 1 || this.indexOf("~third-party") > - 1) {
+		return true;
+	}
 	return false;
 }
 
-String.prototype.getIfDomains = function() {
+Array.prototype.getUnlessDomains = function() {
+	if (this.index)
 	return "";
 }
 
-String.prototype.hasIfDomains = function() {
+Array.prototype.hasDomains = function() {
+	for (var i = 0; i < this.length; i++) {
+		if (this[i].indexOf("domain") == 0) {
+			return true;
+		}
+	}
 	return false;
+}
+
+Array.prototype.getDomains = function() {
+	for (var i = 0; i < this.length; i++) {
+		if (this[i].indexOf("domain=") == 0) {
+			var domains = this[i].substring("domain=".length);
+			if (domains.charAt(0) == '~') {
+				domains = domains.replaceAll('~', ''); // Removing the ~
+			}
+			if (domains.split('|').length == 1) { // Just one domain.
+				return domains;
+			} else {
+				return domains.split('|');
+			}
+		}
+	}
+	return null;
+}
+
+Array.prototype.getTypeDomain = function() {
+	for (var i = 0; i < this.length; i++) {
+		if (this[i].indexOf("domain=~") == 0) {
+			return "unless-domain";
+		}
+	}
+	return "if-domain";
 }

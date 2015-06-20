@@ -103,3 +103,51 @@ exports.testExactAddressDoesNotBlockTwo = function(test){
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
+
+// Additional information.
+
+exports.testAdditionalInfoOne = function(test){
+	var parsedRule = parser.parseRule("/banner/*/img^$domain=~adresult.ch");
+	var url = "http://example.com/banner/foo/img";
+	test.notEqual(url.match(parsedRule["url-filter"]), null); // We still find the URL
+    test.done();
+};
+
+exports.testAdditionalInfoTwo = function(test){
+	var parsedRule = parser.parseRule("/banner/*/img^$domain=~adresult.ch");
+	test.equal(parsedRule["unless-domain"], "adresult.ch");
+    test.done();
+};
+
+exports.testAdditionalInfoThree = function(test){
+	var parsedRule = parser.parseRule("/banner/*/img^$domain=~adresult.ch");
+	test.equal(parsedRule["if-domain"], null);
+    test.done();
+};
+
+exports.testAdditionalInfoFour = function(test){
+	var parsedRule = parser.parseRule("/banner/*/img^$domain=~channel4.com|~watchever.de");
+	test.equal(parsedRule["unless-domain"][0], "channel4.com");
+	test.equal(parsedRule["unless-domain"][1], "watchever.de");
+    test.done();
+};
+
+exports.testAdditionalInfoFive = function(test){
+	var parsedRule = parser.parseRule("/banner/*/img^$domain=channel4.com|watchever.de");
+	test.equal(parsedRule["if-domain"][0], "channel4.com");
+	test.equal(parsedRule["if-domain"][1], "watchever.de");
+    test.done();
+};
+
+exports.testAdditionalInfoSix = function(test){
+	var parsedRule = parser.parseRule("/banner/*/img^$script,subdocument,third-party");
+	test.equal(parsedRule["resource-type"][0], "script");
+	test.equal(parsedRule["load-type"], "third-party");
+    test.done();
+};
+
+exports.testAdditionalInfoSeven = function(test){
+	var parsedRule = parser.parseRule("/banner/*/img^$script,subdocument,~third-party");
+	test.equal(parsedRule["load-type"], "first-party");
+    test.done();
+};
