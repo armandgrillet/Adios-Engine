@@ -1,8 +1,8 @@
 module.exports = {
 	parseRule: function(rule) {
 		if (rule.isNotAComment()) {
-			var trigger;
-			var action;
+			var trigger = {};
+			var action = {};
 			if (rule.isNotElementHiding()) {
 				trigger = { "url-filter": rule.getUrlFilter() };
 
@@ -31,7 +31,6 @@ module.exports = {
 				} else {
 					action["type"] = "ignore-previous-rules";
 				}
-				return {"trigger": trigger, "action": action};
 			} else { // It's element hiding
 				trigger = { "url-filter": rule.getElementHidingUrlFilter() };
 				if (rule.hasElementHidingDomains()) {
@@ -41,6 +40,7 @@ module.exports = {
 				action["type"] = "css-display-none",
 				action["selector"] = rule.getSelector();
 			}
+			return {"trigger": trigger, "action": action};
 		}
 		return null;
 	}
@@ -132,12 +132,15 @@ String.prototype.hasTidle = function() {
 }
 
 String.prototype.getElementHidingDomains = function() {
-	var domains = this.substring(0, this.substring.indexOf("##")).split(',');
+	var domains = this.getElementHidingDomainsArray();
 	var triggerDomains = [];
 	var needTidle = this.hasElementHidingMixedDomains();
 
+
 	for (var i = 0; i < domains.length; i++) {
-		if ((needTidle && domains[i].hasTidle()) || (!needTidle && !domains[i].hasTidle())) {
+		if (needTidle && domains[i].hasTidle()) {
+			triggerDomains.push(domains[i].slice(1));
+		} else {
 			triggerDomains.push(domains[i]);
 		}
 	}
@@ -145,22 +148,26 @@ String.prototype.getElementHidingDomains = function() {
 }
 
 String.prototype.getElementHidingTypeDomain = function() {
-	if (this.hasElementHidingMixedDomains) {
+	if (this.hasElementHidingMixedDomains()) {
 		return "unless-domain";
 	}
 	return "if-domain";
 }
 
 String.prototype.hasElementHidingDomains = function() {
-	if (this.substring(0, this.substring.indexOf("##")).split(',')[0].length > 1) {
+	if (this.getElementHidingDomainsArray()[0].length > 0) {
 		return true;
 	}
 	return false;
 }
 
+String.prototype.getElementHidingDomainsArray = function() {
+	return this.substring(0, this.indexOf("##")).split(',');
+}
+
 String.prototype.hasElementHidingMixedDomains = function() {
 	if (this.hasElementHidingDomains()) {
-		var domains = this.substring(0, this.substring.indexOf("##")).split(',');
+		var domains = this.getElementHidingDomainsArray();
 		var ifDomain = false;
 		var unlessDomain = false;
 		for (var i = 0; i < domains.length; i++) {
@@ -179,21 +186,21 @@ String.prototype.hasElementHidingMixedDomains = function() {
 
 String.prototype.getElementHidingUrlFilter = function() {
 	if (this.hasElementHidingMixedDomains()) {
-		var domains = this.substring(0, this.substring.indexOf("##")).split(',');
+		var domains = this.getElementHidingDomainsArray();
 		var expression = "(";
 		for (var i = 0; i < domains.length; i++) {
 			if (!domains[i].hasTidle()) {
 				expression += domains[i] + '|'; // Shitty RegExp because the filters are “if-domain” and “unless-domain” are exclusive.
 			}
 		}
-		expression = expression.slice(-1) + ')';
+		expression = expression.slice(0,-1) + ')';
 		return expression;
 	}
 	return ".*";
 }
 
 String.prototype.getSelector = function() {
-	return this.substring.substring(this.substring.indexOf("##") + 2);
+	return this.substring(this.indexOf("##") + 2);
 }
 
 Array.prototype.getResourceTypes = function() {

@@ -115,7 +115,6 @@ exports.testAdditionalInfoOne = function(test){
 
 exports.testAdditionalInfoTwo = function(test){
 	var parsedRule = parser.parseRule("/banner/*/img^$domain=~adresult.ch")["trigger"];
-	console.log(parsedRule);
 	test.equal(parsedRule["unless-domain"][0], "adresult.ch");
     test.done();
 };
@@ -181,5 +180,34 @@ exports.testActionTwo = function(test){
 	var url = "http://example.com/banner/foo/bar/img?param";
 	test.notEqual(url.match(rule["trigger"]["url-filter"]), null);
 	test.equal(rule["action"]["type"], "ignore-previous-rules");
+    test.done();
+};
+
+exports.testElementHidingOne = function(test){
+	var rule = parser.parseRule("retrevo.com###pcw_bottom_inner");
+	var url = "http://example.com/banner/foo/bar/img?param";
+	test.equal(rule["action"]["type"], "css-display-none");
+	test.equal(rule["action"]["selector"], "#pcw_bottom_inner");
+	test.equal(rule["trigger"]["if-domain"][0], "retrevo.com");
+	test.equal(rule["trigger"]["url-filter"], ".*");
+    test.done();
+};
+
+exports.testElementHidingTwo = function(test){
+	var ifDomains = parser.parseRule("yourmovies.com.au,yourrestaurants.com.au,yourtv.com.au###preheader-ninemsn-container")["trigger"]["if-domain"];
+	var url = "http://example.com/banner/foo/bar/img?param";
+	test.equal(ifDomains[0], "yourmovies.com.au");
+	test.equal(ifDomains[1], "yourrestaurants.com.au");
+	test.equal(ifDomains[2], "yourtv.com.au");
+    test.done();
+};
+
+exports.testElementHidingThree = function(test){
+	var rule = parser.parseRule("~images.search.yahoo.com,search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child");
+	var url = "http://example.com/banner/foo/bar/img?param";
+	test.equal(rule["action"]["type"], "css-display-none");
+	test.equal(rule["action"]["selector"], "#right > div > .searchRightMiddle + div[id]:last-child");
+	test.equal(rule["trigger"]["unless-domain"][0], "images.search.yahoo.com");
+	test.equal(rule["trigger"]["url-filter"], "(search.yahoo.com)");
     test.done();
 };
