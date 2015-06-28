@@ -6,13 +6,14 @@
     "start": "node clock.js"
   },
   "dependencies": {
-    "express": "~4.9.x"
+    "express": "latest",
+    "request": "latest"
   },
   "engines": {
     "iojs": "2.3.x"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heroku/node-js-getting-started"
+    "url": "https://github.com/ArmandGrillet/Adios-back-end"
   }
 }

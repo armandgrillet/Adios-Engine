@@ -8,6 +8,11 @@ module.exports = {
 
 				if (rule.hasOptions()) {
 					var options = rule.getOptions();
+
+					if (options.isCaseSensitive()) {
+						trigger["url-filter-is-case-sensitive"] = true;
+					}
+
 					if (options.hasResourceTypes()) {
 						if (options.hasCompatibleResourceTypes()) {
 							trigger["resource-type"] = options.getResourceTypes();
@@ -26,12 +31,15 @@ module.exports = {
 				}
 
 				action = {};
-				if (rule.isNotAnException()) {
-					action["type"] = "block";
-				} else {
+				if (rule.isAnException()) {
 					action["type"] = "ignore-previous-rules";
+				} else {
+					action["type"] = "block";
 				}
 			} else { // It's element hiding
+				if (rule.hasExceptionRuleSyntax()) {
+					rule = rule.transformInElementHidingSyntax();
+				}
 				trigger = { "url-filter": rule.getElementHidingUrlFilter() };
 				if (rule.hasElementHidingDomains()) {
 					trigger[rule.getElementHidingTypeDomain()] = rule.getElementHidingDomains();
@@ -53,32 +61,50 @@ String.prototype.isNotAComment = function() {
 	return false;
 }
 
-String.prototype.isNotAnException = function() {
+String.prototype.isAnException = function() {
 	if (this.indexOf("@@") == 0) {
-		return false;
-	}
-	return true;
-}
-
-String.prototype.isNotElementHiding = function() {
-	if (this.indexOf("##") == -1) {
 		return true;
 	}
 	return false;
 }
 
-String.prototype.replaceAll = function(str1, str2, ignore) {
-    return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g,"\\$&"),(ignore?"gi":"g")),(typeof(str2)=="string")?str2.replace(/\$/g,"$$$$"):str2);
-} 
+String.prototype.isNotElementHiding = function() {
+	if (this.indexOf("##") == -1 && this.indexOf("#@#") == -1) {
+		return true;
+	}
+	return false;
+}
+
+String.prototype.hasExceptionRuleSyntax = function() {
+	if (this.indexOf("#@#") != -1) {
+		return true;
+	}
+	return false;
+}
+
+String.prototype.transformInElementHidingSyntax = function() {
+	var domains = this.substring(0, this.indexOf("#@#")).split(',');
+	var newDomains = [];
+	for (var i = 0; i < domains.length; i++) {
+		if (domains[i].hasTidle()) {
+			newDomains.push(domains[i].slice(1));
+		} else {
+			newDomains.push('~' + domains[i]);
+		}
+	}
+	return newDomains.join() + "##" + this.substring(this.indexOf("#@#") + 3);
+}
 
 String.prototype.getUrlFilter = function() {
-	// Escape special regex characters
-	var urlFilter = this.replace(/[.$+?{}()\[\]\\]/g, "\\$&");
+	var urlFilter = this;
 
 	// Remove additional informations
-	if (urlFilter.indexOf("\$") > 0) {
-		urlFilter = urlFilter.substring(0, urlFilter.indexOf("\$") - 1);
+	if (urlFilter.indexOf("$") > 0) {
+		urlFilter = urlFilter.substring(0, urlFilter.indexOf("$"));
 	}
+
+	// Escape special regex characters
+	var urlFilter = urlFilter.replace(/[.$+?{}()\[\]\\]/g, "\\$&");
 
 	// Remove exception characters
 	if (urlFilter.indexOf("@@") == 0) {
@@ -87,14 +113,14 @@ String.prototype.getUrlFilter = function() {
 
 	// Separator character ^ matches anything but a letter, a digit, or one of the following: _ - . %. 
 	// The end of the address is also accepted as separator.
-	urlFilter = urlFilter.replaceAll("^", String.raw`(?:[^\w\d_\-.%]|$)`);
+	urlFilter = urlFilter.replace(/\^/g, String.raw`[^a-z\-A-Z0-9._.%]`);
 
 	// * symbol
-	urlFilter = urlFilter.replaceAll("*", ".*");
+	urlFilter = urlFilter.replace(/\*/g, ".*");
 
 	// | in the end means the end of the address
 	if (urlFilter.slice(-1) == '|') {
-        urlFilter = urlFilter.slice(0,-1) + '$';
+        urlFilter = urlFilter.slice(0, -1) + '$';
 	}
 
 	// || in the beginning means beginning of the domain name
@@ -106,8 +132,8 @@ String.prototype.getUrlFilter = function() {
 		urlFilter = '^' + urlFilter.slice(1);
 	}
 
-	// other | symbols should be escaped
-	urlFilter = urlFilter.replaceAll("(\|)[^$]", String.raw`\|`)
+	// other | symbols should be escaped, we have "|$" in our regexp - do not touch it
+	urlFilter = urlFilter.replace(/\|/g, String.raw`\|`);
 
 	return urlFilter;
 }
@@ -134,13 +160,17 @@ String.prototype.hasTidle = function() {
 String.prototype.getElementHidingDomains = function() {
 	var domains = this.getElementHidingDomainsArray();
 	var triggerDomains = [];
-	var needTidle = this.hasElementHidingMixedDomains();
-
+	var needTidle;
+	if (this.getElementHidingTypeDomain() == "if-domain") {
+		needTidle = false;
+	} else {
+		needTidle = true;
+	}
 
 	for (var i = 0; i < domains.length; i++) {
 		if (needTidle && domains[i].hasTidle()) {
 			triggerDomains.push(domains[i].slice(1));
-		} else {
+		} else if (!needTidle && !domains[i].hasTidle()) {
 			triggerDomains.push(domains[i]);
 		}
 	}
@@ -148,8 +178,11 @@ String.prototype.getElementHidingDomains = function() {
 }
 
 String.prototype.getElementHidingTypeDomain = function() {
-	if (this.hasElementHidingMixedDomains()) {
-		return "unless-domain";
+	var domains = this.getElementHidingDomainsArray();
+	for (var i = 0; i < domains.length; i++) {
+		if (domains[i].hasTidle()) {
+			return "unless-domain";
+		}
 	}
 	return "if-domain";
 }
@@ -203,10 +236,17 @@ String.prototype.getSelector = function() {
 	return this.substring(this.indexOf("##") + 2);
 }
 
+Array.prototype.isCaseSensitive = function() {
+	if (this.indexOf("match-case") > -1) {
+		return true;
+	}
+	return false;
+}
+
 Array.prototype.getResourceTypes = function() {
 	var resourceTypes = [];
 	if (this[0].hasTidle()) {
-		resourceTypes = ["document", "script", "image", "style-sheet" /*, "font", "raw", "svg-document", "media", "popup" */];
+		resourceTypes = ["document", "script", "image", "style-sheet", "raw", "popup" /*, "font", "svg-document", "media" */];
 		for (var i = 0; i < this.length; i++) {
 			switch (this[i]) {
 				case "~document":
@@ -217,7 +257,12 @@ Array.prototype.getResourceTypes = function() {
 			  	case "~stylesheet":
 			  		resourceTypes.splice(resourceTypes.indexOf("style-sheet"), 1);
 			  		break;
-			  	// TODO : Add other cases
+			  	case "subdocument":
+			  		resourceTypes.splice(resourceTypes.indexOf("popup"), 1);
+			  		break;
+			  	case "xmlhttprequest":
+			  		resourceTypes.splice(resourceTypes.indexOf("raw"), 1);
+			  		break;
 			  	default:
 			    	break;
 			}
@@ -233,6 +278,12 @@ Array.prototype.getResourceTypes = function() {
 			  	case "stylesheet":
 			  		resourceTypes.push("style-sheet");
 			  		break;
+			  	case "subdocument":
+			  		resourceTypes.push("popup"); // http://trac.webkit.org/browser/trunk/Source/WebCore/page/DOMWindow.cpp#L2149
+			  		break;
+			  	case "xmlhttprequest":
+			  		resourceTypes.push("raw");
+			  		break;
 			  	// TODO : Add other cases
 			  	default:
 			    	break;
@@ -243,7 +294,7 @@ Array.prototype.getResourceTypes = function() {
 }
 
 Array.prototype.hasResourceTypes = function() {
-	var resourceTypes = ["document", "script", "image", "stylesheet", "object", "object-subrequest", "subdocument"];
+	var resourceTypes = ["document", "script", "image", "stylesheet", "xmlhttprequest", "object", "object-subrequest", "subdocument"];
 	for (var i = 0; i < resourceTypes.length; i++) {
 	    if (this.indexOf(resourceTypes[i]) > -1 || this.indexOf('~' + resourceTypes[i]) > -1) {
 	        return true;
@@ -253,7 +304,10 @@ Array.prototype.hasResourceTypes = function() {
 }
 
 Array.prototype.hasCompatibleResourceTypes = function() {
-	var compatibleResourceTypes = ["document", "script", "image", "stylesheet", "~document", "~script", "~image", "~stylesheet", "~object", "~object-subrequest", "~subdocument"];
+	var compatibleResourceTypes = [ // No "object" because iOS devices don't manage Java or Flash.
+		"document", "script", "image", "stylesheet", "xmlhttprequest", "subdocument", 
+		"~document", "~script", "~image", "~stylesheet", "~xmlhttprequest", "~object", "~object-subrequest", "~subdocument"
+	];
 	for (var i = 0; i < compatibleResourceTypes.length; i++) {
 	    if (this.indexOf(compatibleResourceTypes[i]) > -1) {
 	        return true;
@@ -296,7 +350,7 @@ Array.prototype.getDomains = function() {
 		if (this[i].indexOf("domain=") == 0) {
 			var domains = this[i].substring("domain=".length);
 			if (domains.hasTidle()) {
-				domains = domains.replaceAll('~', ''); // Removing the ~
+				domains = domains.replace(/~/g, ''); // Removing the ~
 			}
 			return domains.split('|');
 		}

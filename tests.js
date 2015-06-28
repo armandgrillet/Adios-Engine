@@ -4,7 +4,7 @@ var parser = require('./parser');
 
 exports.testAddressPartBlocksOne = function(test){
 	var regexFromRule = parser.parseRule("/banner/*/img^")["trigger"]["url-filter"];
-	var url = "http://example.com/banner/foo/img";
+	var url = "http://example.com/banner/foo/img "; // Bug from Apple, [^a-z\-A-Z0-9._.%] is enough to block the url even if we should add $
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
@@ -40,6 +40,50 @@ exports.testAddressPartDoesNotBlockTwo = function(test){
 exports.testAddressPartDoesNotBlockThree = function(test){
 	var regexFromRule = parser.parseRule("/banner/*/img^")["trigger"]["url-filter"];
 	var url = "http://example.com/banner/foo/img.gif";
+	test.equal(url.match(regexFromRule), null);
+    test.done();
+};
+
+// Address separators
+
+exports.testSeparatorCharactersOne = function(test){
+	var regexFromRule = parser.parseRule("||ads.example.com^")["trigger"]["url-filter"];
+	var url = "http://ads.example.com/foo.gif";
+	test.notEqual(url.match(regexFromRule), null);
+    test.done();
+};
+
+exports.testSeparatorCharactersTwo = function(test){
+	var regexFromRule = parser.parseRule("||ads.example.com^")["trigger"]["url-filter"];
+	var url = "http://server1.ads.example.com/foo.gif";
+	test.notEqual(url.match(regexFromRule), null);
+    test.done();
+};
+
+exports.testSeparatorCharactersThree = function(test){
+	var regexFromRule = parser.parseRule("||ads.example.com^")["trigger"]["url-filter"];
+	var url = "https://ads.example.com:8000/";
+	test.notEqual(url.match(regexFromRule), null);
+    test.done();
+};
+
+exports.testSeparatorCharactersFour = function(test){
+	var regexFromRule = parser.parseRule("||ads.example.com^")["trigger"]["url-filter"];
+	var url = "http://ads.example.com.ua/foo.gif";
+	test.equal(url.match(regexFromRule), null);
+    test.done();
+};
+
+exports.testSeparatorCharactersFive = function(test){
+	var regexFromRule = parser.parseRule("||ads.example.com^")["trigger"]["url-filter"];
+	var url = "http://ads.example.com-foo.gif";
+	test.equal(url.match(regexFromRule), null);
+    test.done();
+};
+
+exports.testSeparatorCharactersSix = function(test){
+	var regexFromRule = parser.parseRule("||ads.example.com^")["trigger"]["url-filter"];
+	var url = "http://example.com/redirect/http://ads.example.com/";
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
@@ -108,7 +152,7 @@ exports.testExactAddressDoesNotBlockTwo = function(test){
 
 exports.testAdditionalInfoOne = function(test){
 	var parsedRule = parser.parseRule("/banner/*/img^$domain=~adresult.ch")["trigger"];
-	var url = "http://example.com/banner/foo/img";
+	var url = "http://example.com/banner/foo/img "; // Bug from Apple, [^a-z\-A-Z0-9._.%] is enough to block the url even if we should add $
 	test.notEqual(url.match(parsedRule["url-filter"]), null); // We still find the URL
     test.done();
 };
@@ -152,7 +196,7 @@ exports.testAdditionalInfoSeven = function(test){
     test.done();
 };
 
-exports.testAdditionalInfoHeight = function(test){
+exports.testAdditionalInfoEight = function(test){
 	var parsedRule = parser.parseRule("/banner/*/img^$~script")["trigger"];
 	test.equal(parsedRule["resource-type"][0], "document");
 	test.equal(parsedRule["resource-type"][1], "image");
@@ -166,6 +210,12 @@ exports.testAdditionalInfoNine = function(test){
 	test.equal(parsedRule["resource-type"][1], "style-sheet");
     test.done();
 };
+
+exports.testAdditionalInfoTen = function(test){
+	var parsedRule = parser.parseRule("*/BannerAd.gif$match-case")["trigger"];
+	test.equal(parsedRule["url-filter-is-case-sensitive"], true);
+    test.done();
+}
 
 exports.testActionOne = function(test){
 	var rule = parser.parseRule("/banner/*/img^");
@@ -183,9 +233,10 @@ exports.testActionTwo = function(test){
     test.done();
 };
 
+// Element hiding
+
 exports.testElementHidingOne = function(test){
 	var rule = parser.parseRule("retrevo.com###pcw_bottom_inner");
-	var url = "http://example.com/banner/foo/bar/img?param";
 	test.equal(rule["action"]["type"], "css-display-none");
 	test.equal(rule["action"]["selector"], "#pcw_bottom_inner");
 	test.equal(rule["trigger"]["if-domain"][0], "retrevo.com");
@@ -195,7 +246,6 @@ exports.testElementHidingOne = function(test){
 
 exports.testElementHidingTwo = function(test){
 	var ifDomains = parser.parseRule("yourmovies.com.au,yourrestaurants.com.au,yourtv.com.au###preheader-ninemsn-container")["trigger"]["if-domain"];
-	var url = "http://example.com/banner/foo/bar/img?param";
 	test.equal(ifDomains[0], "yourmovies.com.au");
 	test.equal(ifDomains[1], "yourrestaurants.com.au");
 	test.equal(ifDomains[2], "yourtv.com.au");
@@ -204,10 +254,64 @@ exports.testElementHidingTwo = function(test){
 
 exports.testElementHidingThree = function(test){
 	var rule = parser.parseRule("~images.search.yahoo.com,search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child");
-	var url = "http://example.com/banner/foo/bar/img?param";
 	test.equal(rule["action"]["type"], "css-display-none");
 	test.equal(rule["action"]["selector"], "#right > div > .searchRightMiddle + div[id]:last-child");
 	test.equal(rule["trigger"]["unless-domain"][0], "images.search.yahoo.com");
 	test.equal(rule["trigger"]["url-filter"], "(search.yahoo.com)");
     test.done();
 };
+
+exports.testElementHidingFour = function(test){
+	var rule = parser.parseRule("~search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child");
+	test.equal(rule["action"]["type"], "css-display-none");
+	test.equal(rule["action"]["selector"], "#right > div > .searchRightMiddle + div[id]:last-child");
+	test.equal(rule["trigger"]["unless-domain"][0], "search.yahoo.com");
+    test.done();
+};
+
+exports.testElementHidingFive = function(test){
+	var rule = parser.parseRule("images.search.yahoo.com,~search.yahoo.com#@##right > div > .searchRightMiddle + div[id]:last-child");
+	test.equal(rule["action"]["type"], "css-display-none");
+	test.equal(rule["action"]["selector"], "#right > div > .searchRightMiddle + div[id]:last-child");
+	test.equal(rule["trigger"]["unless-domain"][0], "images.search.yahoo.com");
+	test.equal(rule["trigger"]["url-filter"], "(search.yahoo.com)");
+    test.done();
+};
+
+exports.testElementHidingSix = function(test){
+	var rule = parser.parseRule("1sale.com,7billionworld.com,abajournal.com,altavista.com,androidfilehost.com,arcadeprehacks.com,asbarez.com,birdforum.net,coinad.com,cuzoogle.com,cyclingweekly.co.uk,disconnect.me,domainnamenews.com,eco-business.com,energylivenews.com,facemoods.com,fcall.in,flashx.tv,foxbusiness.com,foxnews.com,freetvall.com,friendster.com,fstoppers.com,ftadviser.com,furaffinity.net,gentoo.org,gmanetwork.com,govtrack.us,gramfeed.com,gyazo.com,hispanicbusiness.com,html5test.com,hurricanevanessa.com,i-dressup.com,iheart.com,ilovetypography.com,irennews.org,isearch.whitesmoke.com,itar-tass.com,itproportal.com,kingdomrush.net,laptopmag.com,laweekly.com,lfpress.com,livetvcafe.net,lovemyanime.net,malaysiakini.com,manga-download.org,maps.google.com,marinetraffic.com,mb.com.ph,meaningtattos.tk,mmajunkie.com,movies-online-free.net,mugshots.com,myfitnesspal.com,mypaper.sg,nbcnews.com,news.nom.co,nsfwyoutube.com,nugget.ca,osn.com,panorama.am,pastie.org,phpbb.com,playboy.com,pocket-lint.com,pokernews.com,previously.tv,radiobroadcaster.org,reason.com,ryanseacrest.com,savevideo.me,sddt.com,~search.yahoo.com,searchfunmoods.com,sgcarmart.com,shopbot.ca,sourceforge.net,tcm.com,tech2.com,thecambodiaherald.com,thedailyobserver.ca,thejakartapost.com,thelakewoodscoop.com,themalaysianinsider.com,theobserver.ca,thepeterboroughexaminer.com,thevoicebw.com,theyeshivaworld.com,tiberium-alliances.com,tjpnews.com,today.com,tubeserv.com,turner.com,twogag.com,ultimate-guitar.com,wallpaper.com,washingtonpost.com,wdet.org,wftlsports.com,womanandhome.com,wtvz.net,yahoo.com,youthedesigner.com,yuku.com##.ads");
+	test.equal(rule["action"]["type"], "css-display-none");
+	test.equal(rule["action"]["selector"], ".ads");
+	test.equal(rule["trigger"]["if-domain"], null);
+	test.equal(rule["trigger"]["unless-domain"][0], "search.yahoo.com");
+	test.equal(rule["trigger"]["unless-domain"].length, 1);
+	test.done();
+}
+
+// Exceptions
+
+exports.testExceptionOne = function(test){
+	var rule = parser.parseRule("@@|http://example.com");
+	test.equal(rule["action"]["type"], "ignore-previous-rules");
+    test.done();
+};
+
+exports.testExceptionTwo = function(test){
+	var rule = parser.parseRule("@@||mongoporn.com^*/adframe/$subdocument");
+	test.equal(rule["action"]["type"], "ignore-previous-rules");
+    test.done();
+};
+
+// Perfect matches for advanced cases
+
+exports.hardTestOne = function(test){
+	var rule = parser.parseRule("|http://*.com^*|*$script,third-party,domain=sporcle.com");
+	var expectedResult = {"trigger":{"url-filter":"^http://.*\\.com[^a-z\\-A-Z0-9._.%].*\\|.*","resource-type":["script"],"load-type":["third-party"],"if-domain":["sporcle.com"]},"action":{"type":"block"}};
+	test.equal(rule["trigger"]["url-filter"], expectedResult["trigger"]["url-filter"]);
+	test.equal(rule["trigger"]["resource-type"][0], expectedResult["trigger"]["resource-type"][0]);
+	test.equal(rule["trigger"]["load-type"][0], expectedResult["trigger"]["load-type"][0]);
+	test.equal(rule["trigger"]["if-domain"][0], expectedResult["trigger"]["if-domain"][0]);
+	test.equal(rule["action"]["type"], expectedResult["action"]["type"]);
+	test.done();
+}
+
