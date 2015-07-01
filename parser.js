@@ -32,9 +32,9 @@ module.exports = {
 
 				action = {};
 				if (rule.isAnException()) {
-					action["type"] = "ignore-previous-rules";
+					action.type = "ignore-previous-rules";
 				} else {
-					action["type"] = "block";
+					action.type = "block";
 				}
 			} else { // It's element hiding
 				if (rule.hasExceptionRuleSyntax()) {
@@ -45,8 +45,8 @@ module.exports = {
 					trigger[rule.getElementHidingTypeDomain()] = rule.getElementHidingDomains();
 				}
 
-				action["type"] = "css-display-none",
-				action["selector"] = rule.getSelector();
+				action.type = "css-display-none",
+				action.selector = rule.getSelector();
 			}
 			return {"trigger": trigger, "action": action};
 		}
@@ -59,28 +59,28 @@ String.prototype.isNotAComment = function() {
 		return true;
 	}
 	return false;
-}
+},
 
 String.prototype.isAnException = function() {
-	if (this.indexOf("@@") == 0) {
+	if (this.indexOf("@@") === 0) {
 		return true;
 	}
 	return false;
-}
+},
 
 String.prototype.isNotElementHiding = function() {
 	if (this.indexOf("##") == -1 && this.indexOf("#@#") == -1) {
 		return true;
 	}
 	return false;
-}
+},
 
 String.prototype.hasExceptionRuleSyntax = function() {
 	if (this.indexOf("#@#") != -1) {
 		return true;
 	}
 	return false;
-}
+},
 
 String.prototype.transformInElementHidingSyntax = function() {
 	var domains = this.substring(0, this.indexOf("#@#")).split(',');
@@ -93,7 +93,7 @@ String.prototype.transformInElementHidingSyntax = function() {
 		}
 	}
 	return newDomains.join() + "##" + this.substring(this.indexOf("#@#") + 3);
-}
+},
 
 String.prototype.getUrlFilter = function() {
 	var urlFilter = this;
@@ -104,14 +104,14 @@ String.prototype.getUrlFilter = function() {
 	}
 
 	// Escape special regex characters
-	var urlFilter = urlFilter.replace(/[.$+?{}()\[\]\\]/g, "\\$&");
+	urlFilter = urlFilter.replace(/[.$+?{}()\[\]\\]/g, "\\$&");
 
 	// Remove exception characters
-	if (urlFilter.indexOf("@@") == 0) {
+	if (urlFilter.indexOf("@@") === 0) {
 		urlFilter = urlFilter.substring(2);
 	}
 
-	// Separator character ^ matches anything but a letter, a digit, or one of the following: _ - . %. 
+	// Separator character ^ matches anything but a letter, a digit, or one of the following: _ - . %.
 	// The end of the address is also accepted as separator.
 	urlFilter = urlFilter.replace(/\^/g, String.raw`[^a-z\-A-Z0-9._.%]`);
 
@@ -136,18 +136,18 @@ String.prototype.getUrlFilter = function() {
 	urlFilter = urlFilter.replace(/\|/g, String.raw`\|`);
 
 	return urlFilter;
-}
+},
 
 String.prototype.hasOptions = function() {
 	if (this.indexOf("\$") > 0) {
 		return true;
 	}
 	return false;
-}
+},
 
 String.prototype.getOptions = function() {
 	return this.substring(this.indexOf("\$") + 1).split(',');
-}
+},
 
 String.prototype.hasTidle = function() {
 	if (this.substring(0,1) == '~') {
@@ -155,7 +155,7 @@ String.prototype.hasTidle = function() {
 	} else {
 		return false;
 	}
-}
+},
 
 String.prototype.getElementHidingDomains = function() {
 	var domains = this.getElementHidingDomainsArray();
@@ -175,7 +175,7 @@ String.prototype.getElementHidingDomains = function() {
 		}
 	}
 	return triggerDomains;
-}
+},
 
 String.prototype.getElementHidingTypeDomain = function() {
 	var domains = this.getElementHidingDomainsArray();
@@ -185,18 +185,18 @@ String.prototype.getElementHidingTypeDomain = function() {
 		}
 	}
 	return "if-domain";
-}
+},
 
 String.prototype.hasElementHidingDomains = function() {
 	if (this.getElementHidingDomainsArray()[0].length > 0) {
 		return true;
 	}
 	return false;
-}
+},
 
 String.prototype.getElementHidingDomainsArray = function() {
 	return this.substring(0, this.indexOf("##")).split(',');
-}
+},
 
 String.prototype.hasElementHidingMixedDomains = function() {
 	if (this.hasElementHidingDomains()) {
@@ -215,7 +215,7 @@ String.prototype.hasElementHidingMixedDomains = function() {
 		}
 	}
 	return false;
-}
+},
 
 String.prototype.getElementHidingUrlFilter = function() {
 	if (this.hasElementHidingMixedDomains()) {
@@ -230,24 +230,25 @@ String.prototype.getElementHidingUrlFilter = function() {
 		return expression;
 	}
 	return ".*";
-}
+},
 
 String.prototype.getSelector = function() {
 	return this.substring(this.indexOf("##") + 2);
-}
+},
 
 Array.prototype.isCaseSensitive = function() {
 	if (this.indexOf("match-case") > -1) {
 		return true;
 	}
 	return false;
-}
+},
 
 Array.prototype.getResourceTypes = function() {
 	var resourceTypes = [];
+	var i = 0;
 	if (this[0].hasTidle()) {
 		resourceTypes = ["document", "script", "image", "style-sheet", "raw", "popup" /*, "font", "svg-document", "media" */];
-		for (var i = 0; i < this.length; i++) {
+		for (i; i < this.length; i++) {
 			switch (this[i]) {
 				case "~document":
 			  	case "~script":
@@ -268,7 +269,7 @@ Array.prototype.getResourceTypes = function() {
 			}
 		}
 	} else {
-		for (var i = 0; i < this.length; i++) {
+		for (i; i < this.length; i++) {
 			switch (this[i]) {
 				case "document":
 			  	case "script":
@@ -291,7 +292,7 @@ Array.prototype.getResourceTypes = function() {
 		}
 	}
 	return resourceTypes;
-}
+},
 
 Array.prototype.hasResourceTypes = function() {
 	var resourceTypes = ["document", "script", "image", "stylesheet", "xmlhttprequest", "object", "object-subrequest", "subdocument"];
@@ -301,11 +302,11 @@ Array.prototype.hasResourceTypes = function() {
 	    }
 	}
 	return false;
-}
+},
 
 Array.prototype.hasCompatibleResourceTypes = function() {
 	var compatibleResourceTypes = [ // No "object" because iOS devices don't manage Java or Flash.
-		"document", "script", "image", "stylesheet", "xmlhttprequest", "subdocument", 
+		"document", "script", "image", "stylesheet", "xmlhttprequest", "subdocument",
 		"~document", "~script", "~image", "~stylesheet", "~xmlhttprequest", "~object", "~object-subrequest", "~subdocument"
 	];
 	for (var i = 0; i < compatibleResourceTypes.length; i++) {
@@ -314,7 +315,7 @@ Array.prototype.hasCompatibleResourceTypes = function() {
 	    }
 	}
 	return false;
-}
+},
 
 Array.prototype.getLoadType = function() {
 	if (this.indexOf("third-party") > - 1) {
@@ -322,32 +323,32 @@ Array.prototype.getLoadType = function() {
 	} else { // "~third-party"
 		return ["first-party"];
 	}
-}
+},
 
 Array.prototype.hasLoadType = function() {
 	if (this.indexOf("third-party") > - 1 || this.indexOf("~third-party") > - 1) {
 		return true;
 	}
 	return false;
-}
+},
 
 Array.prototype.getUnlessDomains = function() {
 	if (this.index)
 	return "";
-}
+},
 
 Array.prototype.hasDomains = function() {
 	for (var i = 0; i < this.length; i++) {
-		if (this[i].indexOf("domain=") == 0) {
+		if (this[i].indexOf("domain=") === 0) {
 			return true;
 		}
 	}
 	return false;
-}
+},
 
 Array.prototype.getDomains = function() {
 	for (var i = 0; i < this.length; i++) {
-		if (this[i].indexOf("domain=") == 0) {
+		if (this[i].indexOf("domain=") === 0) {
 			var domains = this[i].substring("domain=".length);
 			if (domains.hasTidle()) {
 				domains = domains.replace(/~/g, ''); // Removing the ~
@@ -356,11 +357,11 @@ Array.prototype.getDomains = function() {
 		}
 	}
 	return null;
-}
+},
 
 Array.prototype.getTypeDomain = function() {
 	for (var i = 0; i < this.length; i++) {
-		if (this[i].indexOf("domain=") == 0 && this[i].substring("domain=".length).hasTidle()) {
+		if (this[i].indexOf("domain=") === 0 && this[i].substring("domain=".length).hasTidle()) {
 			return "unless-domain";
 		}
 	}
