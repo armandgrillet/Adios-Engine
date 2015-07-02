@@ -1,19 +1,22 @@
 {
-  "name": "adios-back-end",
+  "name": "adios-parser",
   "version": "0.0.1",
-  "description": "The back-end of Adios",
+  "description": "Parsing the ABP lists and pushing them in ",
   "scripts": {
-    "start": "node clock.js"
+    "start": "node checker.js"
   },
   "dependencies": {
+    "aws-sdk": "latest",
+    "dotenv": "^1.2.0",
     "express": "latest",
-    "request": "latest"
+    "request": "latest",
+    "async": "latest"
   },
   "engines": {
     "iojs": "2.3.x"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ArmandGrillet/Adios-back-end"
+    "url": "https://github.com/ArmandGrillet/Adios-parser"
   }
 }
