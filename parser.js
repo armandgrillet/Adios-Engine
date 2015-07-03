@@ -1,4 +1,7 @@
+var ascii = /^[ -~]+$/;
+
 module.exports = {
+	// Create a JSON object from the RegExp
 	parseRule: function(rule) {
 		if (rule.isNotAComment()) {
 			var trigger = {};
@@ -26,7 +29,7 @@ module.exports = {
 					}
 
 					if (options.hasDomains()) {
-						trigger[options.getTypeDomain()] = options.getDomains();
+						trigger[options.getTypeDomain()] = options.getDomainsWithoutTidle();
 					}
 				}
 
@@ -51,6 +54,34 @@ module.exports = {
 			return {"trigger": trigger, "action": action};
 		}
 		return null;
+	},
+
+	// Returns true if the rule can be added (no ASCII in it).
+	isAddable: function(rule) {
+		if (rule != null) {
+			if (rule.trigger["if-domain"] != null) {
+				for (var i = 0; i < rule.trigger["if-domain"].length; i++) {
+					if ( !ascii.test( rule.trigger["if-domain"][i] )) {
+						return false;
+					}
+				}
+			}
+
+			if (rule.trigger["unless-domain"] != null) {
+				for (var i = 0; i < rule.trigger["unless-domain"].length; i++) {
+					if ( !ascii.test( rule.trigger["unless-domain"][i] )) {
+						return false;
+					}
+				}
+			}
+
+			if (!ascii.test( rule.trigger["url-filter"])) {
+				return false;
+			}
+
+			return true;
+		}
+		return false;
 	}
 };
 
@@ -150,7 +181,7 @@ String.prototype.getOptions = function() {
 },
 
 String.prototype.hasTidle = function() {
-	if (this.substring(0,1) == '~') {
+	if (this.substring(0, 1) == '~') {
 		return true;
 	} else {
 		return false;
@@ -346,14 +377,10 @@ Array.prototype.hasDomains = function() {
 	return false;
 },
 
-Array.prototype.getDomains = function() {
+Array.prototype.getDomainsWithoutTidle = function() {
 	for (var i = 0; i < this.length; i++) {
 		if (this[i].indexOf("domain=") === 0) {
-			var domains = this[i].substring("domain=".length);
-			if (domains.hasTidle()) {
-				domains = domains.replace(/~/g, ''); // Removing the ~
-			}
-			return domains.split('|');
+			return this[i].substring("domain=".length).replace(/~/g, '').split('|'); // Returns the domains without the tidle, splitted by '|'.
 		}
 	}
 	return null;
