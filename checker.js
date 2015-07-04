@@ -1,6 +1,7 @@
+'use strict';
+
 var parser = require('./parser');
 var request = require('request');
-var fs  = require("fs");
 var aws = require('aws-sdk');
 var async = require('async');
 aws.config.update({
@@ -10,18 +11,18 @@ aws.config.update({
 require('dotenv').load();
 
 var lists = [
-	{"name": "EasyList", "url": "https://easylist-downloads.adblockplus.org/easylist.txt"},
-	{"name": "EasyList_FR", "url": "https://easylist-downloads.adblockplus.org/liste_fr.txt"}
+	{'name': 'EasyList', 'url': 'https://easylist-downloads.adblockplus.org/easylist.txt'},
+	{'name': 'EasyList_FR', 'url': 'https://easylist-downloads.adblockplus.org/liste_fr.txt'}
 ];
 
-async.each(lists, function(list, callback) {
+async.each(lists, function(list) {
 	request(list.url, function (error, response, body) {
-		if (!error && response.statusCode == 200) {
+		if (!error && response.statusCode === 200) {
 			var rules = body.split('\n');
 			var rule;
 			var json = [];
 
-			// fs.writeFileSync("./easylist.json", "[\n");
+			// fs.writeFileSync('./easylist.json', '[\n');
 			for (var i = 0; i < rules.length; i++) {
 				if (i !== 0 && parser.parseRule(rules[i]) != null) {
 					rule = parser.parseRule(rules[i]);
@@ -33,14 +34,14 @@ async.each(lists, function(list, callback) {
 			}
 			var s3bucket = new aws.S3({params: {Bucket: 'adiosrules'}});
 			s3bucket.createBucket(function() {
-			  	var params = {Key: list.name + "/list.json", Body: JSON.stringify(json)};
-			  	s3bucket.upload(params, function(err, data) {
-			    	if (err) {
-			      		console.log("Error uploading data: ", err);
-			    	} else {
-			      		console.log("Successfully uploaded data to adiosrules/easylist");
-			    	}
-			  	});
+				var params = {Key: list.name + '/list.json', Body: JSON.stringify(json)};
+				s3bucket.upload(params, function(err, data) {
+					if (err) {
+						console.log('Error uploading data: ', err);
+					} else {
+						console.log('Successfully uploaded data to adiosrules/easylist');
+					}
+				});
 			});
 		}
 	});
