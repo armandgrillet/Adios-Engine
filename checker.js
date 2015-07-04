@@ -25,10 +25,17 @@ async.each(lists, function(list) {
 			// fs.writeFileSync('./easylist.json', '[\n');
 			for (var i = 0; i < rules.length; i++) {
 				if (i !== 0 && parser.parseRule(rules[i]) != null) {
-					rule = parser.parseRule(rules[i]);
-
-					if (parser.isAddable(rule)) {
-						json.push(rule);
+					if (parser.isRule(rules[i])) {
+						rule = parser.parseRule(rules[i]);
+						if (rule !== undefined) {
+							if (rule instanceof Array) { // Multiple rules, exceptionnal case due to the exclusivity of if-domain and unless-domain
+								for (var realRule in rule) {
+									json.push(rule[realRule]);
+								}
+							} else {
+								json.push(rule);
+							}
+						}
 					}
 				}
 			}

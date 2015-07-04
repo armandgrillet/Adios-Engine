@@ -1,9 +1,10 @@
 'use strict';
 
-var ascii = /^[ -~]+$/;
-
 function isAllowed(rule) {
 	// First danger: ASCII characters
+	if (!/^[ -~]+$/.test(rule)) {
+		return false;
+	}
 
 	// Second danger: unavailable resource type
 	if (rule.indexOf('\$') > 0) { // There is options
@@ -186,62 +187,31 @@ function getElementHidingTrigger(rule) {
 	// Getting the URL filter //
 	////////////////////////////
 
-	var hasElementHidingMixedDomains = false;
-	if (domains[0].length > 0) { // There is domains hidden
-		var ifDomain = false;
-		var unlessDomain = false;
-		for (domain in domains) {
-			if (domains[domain].hasTidle()) {
-				ifDomain = true;
-			} else {
-				unlessDomain = true;
-			}
-		}
-		if (ifDomain && unlessDomain) {
-			hasElementHidingMixedDomains = true;
-		}
-	}
-
-	if (hasElementHidingMixedDomains) {
-		var expression = '(';
-		for (domain in domains) {
-			if (!domains[domain].hasTidle()) {
-				expression += domains[domain] + '|'; // Shitty RegExp because the filters are “if-domain” and “unless-domain” are exclusive.
-			}
-		}
-		trigger['url-filter'] = expression.slice(0, -1) + ')';
-	} else {
-		trigger['url-filter'] = '.*';
-	}
+	trigger['url-filter'] = '.*';
 
 	////////////////////////////////
 	// Getting the rule's domains //
 	////////////////////////////////
 
 	if (domains[0].length > 0) { // The rule has domains
-		var typeDomain = 'if-domain';
+		var ifDomains = [];
+		var unlessDomains = [];
+
 		for (domain in domains) {
 			if (domains[domain].hasTidle()) {
-				typeDomain = 'unless-domain';
+				unlessDomains.push(domains[domain].slice(1));
+			} else {
+				ifDomains.push(domains[domain]);
 			}
 		}
 
-		var triggerDomains = [];
-		var needTidle;
-		if (typeDomain === 'if-domain') {
-			needTidle = false;
-		} else {
-			needTidle = true;
+		if (ifDomains.length > 0) {
+			trigger['if-domain'] = ifDomains;
 		}
 
-		for (domain in domains) {
-			if (needTidle && domains[domain].hasTidle()) {
-				triggerDomains.push(domains[domain].slice(1));
-			} else if (!needTidle && !domains[domain].hasTidle()) {
-				triggerDomains.push(domains[domain]);
-			}
+		if (unlessDomains.length > 0) {
+			trigger['unless-domain'] = unlessDomains;
 		}
-		trigger[typeDomain] = triggerDomains;
 	}
 
 	return trigger;
@@ -280,9 +250,11 @@ module.exports = {
 		if (rule.indexOf('##') === -1 && rule.indexOf('#@#') === -1) { // It is not element hiding
 			if (isAllowed(rule)) {
 				return {'trigger': getTrigger(rule), 'action': getAction(rule)};
+			} else {
+				return undefined;
 			}
 		} else { // It is element hiding
-			if (rule.indexOf('#@#') !== -1) { // Exception rule syntax
+			if (rule.indexOf('#@#') !== -1) { // Exception rule syntax, we transform the rule for a standard syntax
 				var domains = rule.substring(0, rule.indexOf('#@#')).split(',');
 				var domain;
 				var newDomains = [];
@@ -295,7 +267,37 @@ module.exports = {
 				}
 				rule = newDomains.join() + '##' + rule.substring(rule.indexOf('#@#') + 3);
 			}
-			return {'trigger': getElementHidingTrigger(rule), 'action': getElementHidingAction(rule)};
+
+			var trigger = getElementHidingTrigger(rule);
+			var action = getElementHidingAction(rule);
+
+			if (trigger['if-domain'] != null && trigger['unless-domain'] != null) { // if-domain + unless-domain = not possible!
+				var rulesList = [];
+				var ifDomain;
+				var unlessDomain;
+				var regularDomains = []; // Just if no else, we're creatign a list of these domains.
+
+				for (ifDomain in trigger['if-domain']) {
+					var ifAndElseDomain = false;
+					var unlessDomains = [];
+					for (unlessDomain in trigger['unless-domain']) {
+						if (unlessDomain.indexOf(ifDomain) > -1) {
+							unlessDomains.push(unlessDomain);
+							ifAndElseDomain = true;
+						}
+					}
+					if (ifAndElseDomain) {
+						var urlFilter = String.raw`^(?:[^:/?#]+:)?(?://(?:[^/?#]*\.)?)?` + ifDomain.replace(/[.$+?{}()\[\]\\]/g, '\\$&') + String.raw`[^a-z\-A-Z0-9._.%]`;
+						rulesList.push({'trigger': {'url-filter': urlFilter, 'unless-domain': unlessDomains}, 'action': action});
+					} else {
+						regularDomains.push(ifDomain);
+					}
+				}
+				rulesList.push({'trigger': {'url-filter': '.*', 'if-domain': regularDomains}, 'action': action}); // The normal ones, all in one rule.
+				return rulesList;
+			} else {
+				return {'trigger': trigger, 'action': action};
+			}
 		}
 	}
 };
