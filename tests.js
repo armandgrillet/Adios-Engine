@@ -255,7 +255,7 @@ exports.testElementHidingThree = function(test){
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.trigger['unless-domain'][0], 'images.search.yahoo.com');
-	test.equal(rule.trigger['url-filter'], '(search.yahoo.com)');
+	test.equal(rule.trigger['url-filter'], '^(?:[^:/?#]+:)?(?://(?:[^/?#]*\\.)?)?search\\.yahoo\\.com[^a-z\\-A-Z0-9._.%]');
     test.done();
 };
 
@@ -272,17 +272,28 @@ exports.testElementHidingFive = function(test){
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.trigger['unless-domain'][0], 'images.search.yahoo.com');
-	test.equal(rule.trigger['url-filter'], '(search.yahoo.com)');
+	test.equal(rule.trigger['url-filter'], '^(?:[^:/?#]+:)?(?://(?:[^/?#]*\\.)?)?search\\.yahoo\\.com[^a-z\\-A-Z0-9._.%]');
     test.done();
 };
 
 exports.testElementHidingSix = function(test){
-	var rule = parser.parseRule('1sale.com,7billionworld.com,abajournal.com,altavista.com,androidfilehost.com,arcadeprehacks.com,asbarez.com,birdforum.net,coinad.com,cuzoogle.com,cyclingweekly.co.uk,disconnect.me,domainnamenews.com,eco-business.com,energylivenews.com,facemoods.com,fcall.in,flashx.tv,foxbusiness.com,foxnews.com,freetvall.com,friendster.com,fstoppers.com,ftadviser.com,furaffinity.net,gentoo.org,gmanetwork.com,govtrack.us,gramfeed.com,gyazo.com,hispanicbusiness.com,html5test.com,hurricanevanessa.com,i-dressup.com,iheart.com,ilovetypography.com,irennews.org,isearch.whitesmoke.com,itar-tass.com,itproportal.com,kingdomrush.net,laptopmag.com,laweekly.com,lfpress.com,livetvcafe.net,lovemyanime.net,malaysiakini.com,manga-download.org,maps.google.com,marinetraffic.com,mb.com.ph,meaningtattos.tk,mmajunkie.com,movies-online-free.net,mugshots.com,myfitnesspal.com,mypaper.sg,nbcnews.com,news.nom.co,nsfwyoutube.com,nugget.ca,osn.com,panorama.am,pastie.org,phpbb.com,playboy.com,pocket-lint.com,pokernews.com,previously.tv,radiobroadcaster.org,reason.com,ryanseacrest.com,savevideo.me,sddt.com,~search.yahoo.com,searchfunmoods.com,sgcarmart.com,shopbot.ca,sourceforge.net,tcm.com,tech2.com,thecambodiaherald.com,thedailyobserver.ca,thejakartapost.com,thelakewoodscoop.com,themalaysianinsider.com,theobserver.ca,thepeterboroughexaminer.com,thevoicebw.com,theyeshivaworld.com,tiberium-alliances.com,tjpnews.com,today.com,tubeserv.com,turner.com,twogag.com,ultimate-guitar.com,wallpaper.com,washingtonpost.com,wdet.org,wftlsports.com,womanandhome.com,wtvz.net,yahoo.com,youthedesigner.com,yuku.com##.ads');
-	test.equal(rule.action.type, 'css-display-none');
-	test.equal(rule.action.selector, '.ads');
-	test.equal(rule.trigger['if-domain'], null);
-	test.equal(rule.trigger['unless-domain'][0], 'search.yahoo.com');
-	test.equal(rule.trigger['unless-domain'].length, 1);
+	var rules = parser.parseRule('savevideo.me,sddt.com,~search.yahoo.com,yahoo.com,youthedesigner.com,yuku.com##.ads');
+	test.equal(rules[0].action.type, 'css-display-none');
+	test.equal(rules[0].action.selector, '.ads');
+	test.equal(rules[0].trigger['if-domain'], null);
+	test.equal(rules[0].trigger['unless-domain'][0], 'search.yahoo.com');
+	test.equal(rules[0].trigger['unless-domain'].length, 1);
+	test.equal(rules[0].trigger['url-filter'], '^(?:[^:/?#]+:)?(?://(?:[^/?#]*\\.)?)?yahoo\\.com[^a-z\\-A-Z0-9._.%]');
+
+	test.equal(rules[1].action.type, 'css-display-none');
+	test.equal(rules[1].action.selector, '.ads');
+	test.equal(rules[1].trigger['unless-domain'], null);
+	test.equal(rules[1].trigger['if-domain'][0], 'savevideo.me');
+	test.equal(rules[1].trigger['if-domain'][1], 'sddt.com');
+	test.equal(rules[1].trigger['if-domain'][2], 'youthedesigner.com');
+	test.equal(rules[1].trigger['if-domain'][3], 'yuku.com');
+	test.equal(rules[1].trigger['if-domain'].length, 4);
+	test.equal(rules[1].trigger['url-filter'], '.*');
 	test.done();
 };
 

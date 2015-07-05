@@ -1,12 +1,9 @@
 'use strict';
 
-function isAllowed(rule) {
-	// First danger: ASCII characters
-	if (!/^[ -~]+$/.test(rule)) {
-		return false;
-	}
+var punycode = require('punycode');
 
-	// Second danger: unavailable resource type
+function isAllowed(rule) {
+	// Unavailable resource type
 	if (rule.indexOf('\$') > 0) { // There is options
 		var options = rule.substring(rule.indexOf('\$') + 1).split(',');
 		var allowedResourceTypes = [ // No 'object' because iOS devices don't manage Java or Flash.
@@ -23,6 +20,13 @@ function isAllowed(rule) {
 		if (ruleOnlyWithUnavailableResourceTypes && (options.indexOf('object') > -1 || options.indexOf('object-subrequest') > -1)) {
 			return false;
 		}
+	}
+	return true;
+}
+
+function isTriggerASCII(trigger) {
+	if (!/^[ -~]+$/.test(trigger)) {
+		return false;
 	}
 	return true;
 }
@@ -162,7 +166,7 @@ function getTrigger(rule) {
 				} else {
 					typeDomain = 'if-domain';
 				}
-				trigger[typeDomain] = options[option].substring('domain='.length).replace(/~/g, '').split('|');
+				trigger[typeDomain] = punycode.toASCII(options[option].substring('domain='.length).replace(/~/g, '')).split('|');
 			}
 		}
 	}
@@ -199,9 +203,9 @@ function getElementHidingTrigger(rule) {
 
 		for (domain in domains) {
 			if (domains[domain].hasTidle()) {
-				unlessDomains.push(domains[domain].slice(1));
+				unlessDomains.push(punycode.toASCII(domains[domain].slice(1)));
 			} else {
-				ifDomains.push(domains[domain]);
+				ifDomains.push(punycode.toASCII(domains[domain]));
 			}
 		}
 
@@ -247,16 +251,20 @@ module.exports = {
 		return {'key': getKey(comment), 'value': getValue(comment)};
 	},
 	parseRule: function(rule) {
+		var trigger;
+		var action;
 		if (rule.indexOf('##') === -1 && rule.indexOf('#@#') === -1) { // It is not element hiding
 			if (isAllowed(rule)) {
-				return {'trigger': getTrigger(rule), 'action': getAction(rule)};
-			} else {
-				return undefined;
-			}
+				trigger = getTrigger(rule);
+				if (isTriggerASCII(trigger)) {
+					return {'trigger': getTrigger(rule), 'action': getAction(rule)};
+				}
+			} 
+			return undefined;
 		} else { // It is element hiding
+			var domain;
 			if (rule.indexOf('#@#') !== -1) { // Exception rule syntax, we transform the rule for a standard syntax
 				var domains = rule.substring(0, rule.indexOf('#@#')).split(',');
-				var domain;
 				var newDomains = [];
 				for (domain in domains) {
 					if (domains[domain].hasTidle()) {
@@ -268,33 +276,52 @@ module.exports = {
 				rule = newDomains.join() + '##' + rule.substring(rule.indexOf('#@#') + 3);
 			}
 
-			var trigger = getElementHidingTrigger(rule);
-			var action = getElementHidingAction(rule);
+			trigger = getElementHidingTrigger(rule);
+			action = getElementHidingAction(rule);
 
-			if (trigger['if-domain'] != null && trigger['unless-domain'] != null) { // if-domain + unless-domain = not possible!
-				var rulesList = [];
-				var ifDomain;
-				var unlessDomain;
-				var regularDomains = []; // Just if no else, we're creatign a list of these domains.
+			if (trigger['if-domain'] !== undefined && trigger['unless-domain'] !== undefined) { // if-domain + unless-domain = not possible!
 
-				for (ifDomain in trigger['if-domain']) {
-					var ifAndElseDomain = false;
-					var unlessDomains = [];
-					for (unlessDomain in trigger['unless-domain']) {
-						if (unlessDomain.indexOf(ifDomain) > -1) {
-							unlessDomains.push(unlessDomain);
-							ifAndElseDomain = true;
+				if (trigger['if-domain'].length === 1) { // Only one if, we can manage that.
+					trigger['url-filter'] = String.raw`^(?:[^:/?#]+:)?(?://(?:[^/?#]*\.)?)?` + trigger['if-domain'][0].replace(/[.$+?{}()\[\]\\]/g, '\\$&') + String.raw`[^a-z\-A-Z0-9._.%]`;
+					delete trigger['if-domain'];
+					return {'trigger': trigger, 'action': action};
+				} else {
+					var rules = [];
+
+					var regularDomains = []; // Only if, no unless.
+
+					var ifDomains = trigger['if-domain'];
+					var unlessDomains = trigger['unless-domain'];
+					var ifDomain;
+					var unlessDomain;
+
+					for (ifDomain in ifDomains) {
+						var ifAndUnlessDomain = false;
+						for (unlessDomain in unlessDomains) {
+							if (unlessDomains[unlessDomain].indexOf(ifDomains[ifDomain]) > -1) {
+								ifAndUnlessDomain = true;
+							}
+						}
+						if (ifAndUnlessDomain) { // There is an if and unless for this domain.
+							var ifUnlessDomains = [];
+							for (unlessDomain in unlessDomains) {
+								if (unlessDomains[unlessDomain].indexOf(ifDomains[ifDomain]) > -1) {
+									ifUnlessDomains.push(unlessDomains[unlessDomain]);
+								}
+							}
+							var newRule = ifDomains[ifDomain] + ',~' + ifUnlessDomains.join(',~') + '##' + rule.substring(rule.indexOf('##') + 2);
+							console.log(newRule);
+							rules.push(this.parseRule(newRule));
+						} else { // Only if for this domain.
+							regularDomains.push(ifDomains[ifDomain]);
 						}
 					}
-					if (ifAndElseDomain) {
-						var urlFilter = String.raw`^(?:[^:/?#]+:)?(?://(?:[^/?#]*\.)?)?` + ifDomain.replace(/[.$+?{}()\[\]\\]/g, '\\$&') + String.raw`[^a-z\-A-Z0-9._.%]`;
-						rulesList.push({'trigger': {'url-filter': urlFilter, 'unless-domain': unlessDomains}, 'action': action});
-					} else {
-						regularDomains.push(ifDomain);
-					}
+
+					var lastRule = regularDomains.join() + '##' + rule.substring(rule.indexOf('##') + 2);
+					console.log(lastRule);
+					rules.push(this.parseRule(lastRule));
+					return rules;
 				}
-				rulesList.push({'trigger': {'url-filter': '.*', 'if-domain': regularDomains}, 'action': action}); // The normal ones, all in one rule.
-				return rulesList;
 			} else {
 				return {'trigger': trigger, 'action': action};
 			}

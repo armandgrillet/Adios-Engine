@@ -10,7 +10,8 @@
     "dotenv": "^1.2.0",
     "express": "latest",
     "request": "latest",
-    "async": "latest"
+    "async": "latest",
+    "punycode": "latest"
   },
   "engines": {
     "iojs": "2.3.x"
