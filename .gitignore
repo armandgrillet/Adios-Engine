@@ -27,7 +27,8 @@ build/Release
 node_modules
 
 # Easylist
-easylist.json
+lists
 
 # Environment variables
 .env
+
