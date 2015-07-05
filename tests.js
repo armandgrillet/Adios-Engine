@@ -169,15 +169,15 @@ exports.testAdditionalInfoThree = function(test){
 
 exports.testAdditionalInfoFour = function(test){
 	var parsedRule = parser.parseRule('/banner/*/img^$domain=~channel4.com|~watchever.de').trigger;
-	test.equal(parsedRule['unless-domain'][0], 'channel4.com');
-	test.equal(parsedRule['unless-domain'][1], 'watchever.de');
+	test.equal(parsedRule['unless-domain'][0], '*channel4.com');
+	test.equal(parsedRule['unless-domain'][1], '*watchever.de');
     test.done();
 };
 
 exports.testAdditionalInfoFive = function(test){
 	var parsedRule = parser.parseRule('/banner/*/img^$domain=channel4.com|watchever.de').trigger;
-	test.equal(parsedRule['if-domain'][0], 'channel4.com');
-	test.equal(parsedRule['if-domain'][1], 'watchever.de');
+	test.equal(parsedRule['if-domain'][0], '*channel4.com');
+	test.equal(parsedRule['if-domain'][1], '*watchever.de');
     test.done();
 };
 
@@ -213,7 +213,7 @@ exports.testAdditionalInfoTen = function(test){
 	var parsedRule = parser.parseRule('*/BannerAd.gif$match-case').trigger;
 	test.equal(parsedRule['url-filter-is-case-sensitive'], true);
     test.done();
-}
+};
 
 exports.testActionOne = function(test){
 	var rule = parser.parseRule('/banner/*/img^');
@@ -237,16 +237,16 @@ exports.testElementHidingOne = function(test){
 	var rule = parser.parseRule('retrevo.com###pcw_bottom_inner');
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#pcw_bottom_inner');
-	test.equal(rule.trigger['if-domain'][0], 'retrevo.com');
+	test.equal(rule.trigger['if-domain'][0], '*retrevo.com');
 	test.equal(rule.trigger['url-filter'], '.*');
     test.done();
 };
 
 exports.testElementHidingTwo = function(test){
 	var ifDomains = parser.parseRule('yourmovies.com.au,yourrestaurants.com.au,yourtv.com.au###preheader-ninemsn-container').trigger['if-domain'];
-	test.equal(ifDomains[0], 'yourmovies.com.au');
-	test.equal(ifDomains[1], 'yourrestaurants.com.au');
-	test.equal(ifDomains[2], 'yourtv.com.au');
+	test.equal(ifDomains[0], '*yourmovies.com.au');
+	test.equal(ifDomains[1], '*yourrestaurants.com.au');
+	test.equal(ifDomains[2], '*yourtv.com.au');
     test.done();
 };
 
@@ -254,7 +254,7 @@ exports.testElementHidingThree = function(test){
 	var rule = parser.parseRule('~images.search.yahoo.com,search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
-	test.equal(rule.trigger['unless-domain'][0], 'images.search.yahoo.com');
+	test.equal(rule.trigger['unless-domain'][0], '*images.search.yahoo.com');
 	test.equal(rule.trigger['url-filter'], '^(?:[^:/?#]+:)?(?://(?:[^/?#]*\\.)?)?search\\.yahoo\\.com[^a-z\\-A-Z0-9._.%]');
     test.done();
 };
@@ -263,7 +263,7 @@ exports.testElementHidingFour = function(test){
 	var rule = parser.parseRule('~search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
-	test.equal(rule.trigger['unless-domain'][0], 'search.yahoo.com');
+	test.equal(rule.trigger['unless-domain'][0], '*search.yahoo.com');
     test.done();
 };
 
@@ -271,7 +271,7 @@ exports.testElementHidingFive = function(test){
 	var rule = parser.parseRule('images.search.yahoo.com,~search.yahoo.com#@##right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
-	test.equal(rule.trigger['unless-domain'][0], 'images.search.yahoo.com');
+	test.equal(rule.trigger['unless-domain'][0], '*images.search.yahoo.com');
 	test.equal(rule.trigger['url-filter'], '^(?:[^:/?#]+:)?(?://(?:[^/?#]*\\.)?)?search\\.yahoo\\.com[^a-z\\-A-Z0-9._.%]');
     test.done();
 };
@@ -281,17 +281,17 @@ exports.testElementHidingSix = function(test){
 	test.equal(rules[0].action.type, 'css-display-none');
 	test.equal(rules[0].action.selector, '.ads');
 	test.equal(rules[0].trigger['if-domain'], null);
-	test.equal(rules[0].trigger['unless-domain'][0], 'search.yahoo.com');
+	test.equal(rules[0].trigger['unless-domain'][0], '*search.yahoo.com');
 	test.equal(rules[0].trigger['unless-domain'].length, 1);
 	test.equal(rules[0].trigger['url-filter'], '^(?:[^:/?#]+:)?(?://(?:[^/?#]*\\.)?)?yahoo\\.com[^a-z\\-A-Z0-9._.%]');
 
 	test.equal(rules[1].action.type, 'css-display-none');
 	test.equal(rules[1].action.selector, '.ads');
 	test.equal(rules[1].trigger['unless-domain'], null);
-	test.equal(rules[1].trigger['if-domain'][0], 'savevideo.me');
-	test.equal(rules[1].trigger['if-domain'][1], 'sddt.com');
-	test.equal(rules[1].trigger['if-domain'][2], 'youthedesigner.com');
-	test.equal(rules[1].trigger['if-domain'][3], 'yuku.com');
+	test.equal(rules[1].trigger['if-domain'][0], '*savevideo.me');
+	test.equal(rules[1].trigger['if-domain'][1], '*sddt.com');
+	test.equal(rules[1].trigger['if-domain'][2], '*youthedesigner.com');
+	test.equal(rules[1].trigger['if-domain'][3], '*yuku.com');
 	test.equal(rules[1].trigger['if-domain'].length, 4);
 	test.equal(rules[1].trigger['url-filter'], '.*');
 	test.done();
@@ -315,7 +315,7 @@ exports.testExceptionTwo = function(test){
 
 exports.hardTestOne = function(test){
 	var rule = parser.parseRule('|http://*.com^*|*$script,third-party,domain=sporcle.com');
-	var expectedResult = {'trigger': { 'url-filter': '^http://.*\\.com[^a-z\\-A-Z0-9._.%].*\\|.*', 'resource-type': ['script'], 'load-type': ['third-party'], 'if-domain': ['sporcle.com']}, 'action': { 'type': 'block' } };
+	var expectedResult = {'trigger': { 'url-filter': '^http://.*\\.com[^a-z\\-A-Z0-9._.%].*\\|.*', 'resource-type': ['script'], 'load-type': ['third-party'], 'if-domain': ['*sporcle.com']}, 'action': { 'type': 'block' } };
 	test.equal(rule.trigger['url-filter'], expectedResult.trigger['url-filter']);
 	test.equal(rule.trigger['resource-type'][0], expectedResult.trigger['resource-type'][0]);
 	test.equal(rule.trigger['load-type'][0], expectedResult.trigger['load-type'][0]);

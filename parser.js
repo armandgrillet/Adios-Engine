@@ -24,13 +24,6 @@ function isAllowed(rule) {
 	return true;
 }
 
-function isTriggerASCII(trigger) {
-	if (!/^[ -~]+$/.test(trigger)) {
-		return false;
-	}
-	return true;
-}
-
 function getTrigger(rule) {
 	var trigger = {};
 
@@ -166,7 +159,7 @@ function getTrigger(rule) {
 				} else {
 					typeDomain = 'if-domain';
 				}
-				trigger[typeDomain] = punycode.toASCII(options[option].substring('domain='.length).replace(/~/g, '')).split('|');
+				trigger[typeDomain] = punycode.toASCII(options[option].substring('domain='.length).replace(/~/g, '')).split('|').map(addWildcard);
 			}
 		}
 	}
@@ -233,6 +226,11 @@ function getValue(comment) {
 	return {comment};
 }
 
+/* Miscellaneous methods */
+function addWildcard(e) {
+	return '*' + e;
+}
+
 String.prototype.hasTidle = function() {
 	if (this.substring(0, 1) === '~') {
 		return true;
@@ -256,10 +254,10 @@ module.exports = {
 		if (rule.indexOf('##') === -1 && rule.indexOf('#@#') === -1) { // It is not element hiding
 			if (isAllowed(rule)) {
 				trigger = getTrigger(rule);
-				if (isTriggerASCII(trigger)) {
+				if (/^[ -~]+$/.test(trigger['url-filter'])) {
 					return {'trigger': getTrigger(rule), 'action': getAction(rule)};
 				}
-			} 
+			}
 			return undefined;
 		} else { // It is element hiding
 			var domain;
@@ -284,6 +282,7 @@ module.exports = {
 				if (trigger['if-domain'].length === 1) { // Only one if, we can manage that.
 					trigger['url-filter'] = String.raw`^(?:[^:/?#]+:)?(?://(?:[^/?#]*\.)?)?` + trigger['if-domain'][0].replace(/[.$+?{}()\[\]\\]/g, '\\$&') + String.raw`[^a-z\-A-Z0-9._.%]`;
 					delete trigger['if-domain'];
+					trigger['unless-domain'] = trigger['unless-domain'].map(addWildcard);
 					return {'trigger': trigger, 'action': action};
 				} else {
 					var rules = [];
@@ -310,7 +309,6 @@ module.exports = {
 								}
 							}
 							var newRule = ifDomains[ifDomain] + ',~' + ifUnlessDomains.join(',~') + '##' + rule.substring(rule.indexOf('##') + 2);
-							console.log(newRule);
 							rules.push(this.parseRule(newRule));
 						} else { // Only if for this domain.
 							regularDomains.push(ifDomains[ifDomain]);
@@ -318,11 +316,15 @@ module.exports = {
 					}
 
 					var lastRule = regularDomains.join() + '##' + rule.substring(rule.indexOf('##') + 2);
-					console.log(lastRule);
 					rules.push(this.parseRule(lastRule));
 					return rules;
 				}
 			} else {
+				if (trigger['if-domain'] !== undefined ) {
+					trigger['if-domain'] = trigger['if-domain'].map(addWildcard);
+				} else if (trigger['unless-domain'] !== undefined ) {
+					trigger['unless-domain'] = trigger['unless-domain'].map(addWildcard);
+				}
 				return {'trigger': trigger, 'action': action};
 			}
 		}
