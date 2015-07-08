@@ -61,7 +61,8 @@ function getTrigger(rule) {
 	// || in the beginning means beginning of the domain name
 	if (urlFilter.substring(0, 2) === '||') {
         if (urlFilter.length > 2) {
-			urlFilter = String.raw`^(?:[^:/?#]+:)?(?://(?:[^/?#]*\.)?)?` + urlFilter.slice(2);
+			urlFilter = String.raw`^(?:[^:]+:)(?://(?:[^/?#]*\.)?)` + urlFilter.slice(2);
+
         }
 	} else if (urlFilter.charAt(0) === '|') { // | in the beginning means start of the address
 		urlFilter = '^' + urlFilter.slice(1);
