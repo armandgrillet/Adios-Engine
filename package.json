@@ -11,7 +11,8 @@
     "express": "latest",
     "request": "latest",
     "async": "latest",
-    "punycode": "latest"
+    "punycode": "latest",
+    "jsonfile": "latest"
   },
   "engines": {
     "iojs": "2.3.x"

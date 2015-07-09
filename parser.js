@@ -219,13 +219,15 @@ function getElementHidingAction(rule) {
 	return { 'type': 'css-display-none', 'selector': rule.substring(rule.indexOf('##') + 2) };
 }
 
-function getKey(comment) {
-	return {comment};
-}
+// function getKey(comment) {
+// 	var colon = comment.indexOf(':');
+// 	var lastSpaceBeforeColon = comment.substr(0, colon).lastIndexOf(' ') + 1;
+// 	return comment.substring(lastSpaceBeforeColon, colon);
+// }
 
-function getValue(comment) {
-	return {comment};
-}
+// function getValue(comment) {
+// 	return comment.substring(comment.indexOf(': ') + 2);
+// }
 
 /* Miscellaneous methods */
 function addWildcard(e) {
@@ -246,9 +248,15 @@ module.exports = {
 		}
 		return false;
 	},
-	parseComment: function(comment) {
-		return {'key': getKey(comment), 'value': getValue(comment)};
-	},
+	// isComment: function(line) {
+	// 	if (line.length > 0 && line.charAt(0) === '!' && line.indexOf(':') > -1) {
+	// 		return true;
+	// 	}
+	// 	return false;
+	// },
+	// parseComment: function(comment) {
+	// 	return {'key': getKey(comment), 'value': getValue(comment)};
+	// },
 	parseRule: function(rule) {
 		var trigger;
 		var action;

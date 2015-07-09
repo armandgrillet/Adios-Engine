@@ -324,3 +324,13 @@ exports.hardTestOne = function(test){
 	test.done();
 };
 
+// Parsing comments
+// exports.testCommentOne = function(test){
+// 	var comment = ('! Version: 201507090501');
+// 	test.equal(parser.isComment(comment), true);
+// 	test.equal(parser.parseComment(comment).key, 'Version');
+// 	test.equal(parser.parseComment(comment).value, '201507090501');
+//     test.done();
+// };
+
+

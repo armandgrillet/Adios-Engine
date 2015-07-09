@@ -4,6 +4,7 @@ var parser = require('./parser');
 var request = require('request');
 var async = require('async');
 var fs = require('fs');
+var jsonfile = require('jsonfile');
 
 var lists = [
 	{'name': 'EasyList', 'url': 'https://easylist-downloads.adblockplus.org/easylist.txt'},
@@ -40,25 +41,29 @@ async.each(lists, function(list) {
 			var rule;
 			var json = [];
 
-			// fs.writeFileSync('./easylist.json', '[\n');
+			// Adding the rules.
 			for (var i = 0; i < rules.length; i++) {
-				if (i !== 0 && parser.parseRule(rules[i]) != null) {
-					if (parser.isRule(rules[i])) {
-						rule = parser.parseRule(rules[i]);
-						if (rule !== undefined) {
-							if (rule instanceof Array) { // Multiple rules, exceptionnal case due to the exclusivity of if-domain and unless-domain
-								for (var realRule in rule) {
-									json.push(rule[realRule]);
-								}
-							} else {
-								json.push(rule);
+				if (parser.isRule(rules[i])) {
+					rule = parser.parseRule(rules[i]);
+					if (rule !== undefined) {
+						if (rule instanceof Array) { // Multiple rules, exceptionnal case due to the exclusivity of if-domain and unless-domain
+							for (var realRule in rule) {
+								json.push(rule[realRule]);
 							}
+						} else {
+							json.push(rule);
 						}
 					}
 				}
 			}
-			fs.writeFileSync('./lists/' + list.name + '.json', JSON.stringify(json, null, '\t'));
+
+			jsonfile.readFile('./lists/' + list.name + '.json', function(err, oldJson) {
+				if (err == null) { // We have the object
+					if (JSON.stringify(oldJson) !== JSON.stringify(json)) { // Not the same!
+						fs.writeFileSync('./lists/' + list.name + '.json', JSON.stringify(json, null, '\t'));
+					}
+				}
+			});
 		}
 	});
-}, function(){
 });
