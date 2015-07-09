@@ -11,32 +11,9 @@ aws.config.update({
 require('dotenv').load();
 
 var lists = [
-	{'name': 'EasyList', 'url': 'https://easylist-downloads.adblockplus.org/easylist.txt'},
-	{'name': 'EasyPrivacy', 'url': 'https://easylist-downloads.adblockplus.org/easyprivacy.txt'},
-	{'name': 'AdblockWarningRemoval', 'url': 'https://easylist-downloads.adblockplus.org/antiadblockfilters.txt'},
-	{'name': 'EasyList_France', 'url': 'https://easylist-downloads.adblockplus.org/liste_fr.txt'},
-	{'name': 'EasyList_Germany', 'url': 'https://easylist-downloads.adblockplus.org/easylistgermany.txt'},
-	{'name': 'EasyList_Italy', 'url': 'https://easylist-downloads.adblockplus.org/easylistitaly.txt'},
-	{'name': 'EasyList_Dutch', 'url': 'https://easylist-downloads.adblockplus.org/easylistdutch.txt'},
-	{'name': 'EasyList_China', 'url': 'https://easylist-downloads.adblockplus.org/easylistchina.txt'},
-	{'name': 'EasyList_Bulgaria', 'url': 'http://stanev.org/abp/adblock_bg.txt'},
-	{'name': 'EasyList_Indonesia', 'url': 'https://indonesianadblockrules.googlecode.com/hg/subscriptions/abpindo.txt'},
-	{'name': 'EasyList_Arabic', 'url': 'https://liste-ar-adblock.googlecode.com/hg/Liste_AR.txt'},
-	{'name': 'EasyList_Czechoslovakia', 'url': 'https://adblock-czechoslovaklist.googlecode.com/svn/filters.txt'},
-	{'name': 'EasyList_Hebrew', 'url': 'https://raw.githubusercontent.com/AdBlockPlusIsrael/EasyListHebrew/master/EasyListHebrew.txt'},
-	{'name': 'EasyList_SocialMedia', 'url': 'https://easylist-downloads.adblockplus.org/fanboy-annoyance.txt'},
-	{'name': 'EasyList_Latvia', 'url': 'https://notabug.org/latvian-list/adblock-latvian/raw/master/lists/latvian-list.txt'},
-	{'name': 'EasyList_Romania', 'url': 'http://www.zoso.ro/rolist'},
-	{'name': 'EasyList_Russia', 'url': 'http://easylist-downloads.adblockplus.org/advblock.txt'},
-	{'name': 'EasyList_Iceland', 'url': 'http://adblock.gardar.net/is.abp.txt'},
-	{'name': 'EasyList_Greece', 'url': 'http://adblock.gardar.net/is.abp.txt'},
-	{'name': 'EasyList_Poland', 'url': 'https://raw.githubusercontent.com/adblockpolska/Adblock_PL_List/master/adblock_polska.txt'},
-	{'name': 'List_Japan', 'url': 'https://raw.githubusercontent.com/k2jp/abp-japanese-filters/master/abpjf.txt'},
-	{'name': 'List_Estonia', 'url': 'http://gurud.ee/ab.txt'},
-	{'name': 'List_Hungary', 'url': 'https://raw.githubusercontent.com/szpeter80/hufilter/master/hufilter.txt'},
-	{'name': 'List_Danish', 'url': 'http://adblock.schack.dk/block.txt'},
-	{'name': 'List_England', 'url': 'http://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0&startdate%5Bday%5D=&startdate%5Bmonth%5D=&startdate%5Byear%5D=&mimetype=plaintext'}
-];
+	{'name': 'EasyList', 'url': 'https://easylist-downloads.adblockplus.org/easylist.txt'}];
+
+var s3bucket = new aws.S3({params: {Bucket: 'adiosrules'}});
 
 async.each(lists, function(list) {
 	request(list.url, function (error, response, body) {
@@ -62,26 +39,49 @@ async.each(lists, function(list) {
 					}
 				}
 			}
-			var s3bucket = new aws.S3({params: {Bucket: 'adiosrules'}});
-			s3bucket.createBucket(function() {
-				var params = {Key: list.name + '/list.json', Body: JSON.stringify(json)};
-				s3bucket.upload(params, function(err, data) {
-					if (err) {
-						console.log('Error uploading data: ', err);
+
+			s3bucket.getObject({Key: 'last/' + list.name + '.json'}, function(err, data) {
+				if (err) {
+					console.log('Error downloading last/' + list.name + '.json: not found');
+					uploadNewList(list.name, JSON.stringify(json));
+				} else {
+					if (data.Body.toString() !== JSON.stringify(json)) {
+						s3bucket.createBucket(function() {
+							var params = {Key: list.name + '/' + Date.now() + '.json', Body: JSON.stringify(data.Body.toString())};
+							s3bucket.upload(params, function(err, data) {
+								if (err) {
+									console.log('Error uploading data: ', err);
+								} else {
+									console.log('Successfully uploaded data to ' + list.name + '/' + Date.now() + '.json');
+									uploadNewList(list.name, JSON.stringify(json));
+								}
+							});
+						});
 					} else {
-						console.log('Successfully uploaded data to adiosrules/easylist');
+						var now = new Date();
+						console.log(list.name + ' didn\'t changed at ' + now.getDate() + '/' + (now.getMonth()+1) + '/' + now.getFullYear());
 					}
-				});
+				}
 			});
 		}
 	});
 }, function(err){
-    // if any of the file processing produced an error, err would equal that error
     if( err ) {
-      // One of the iterations produced an error.
-      // All processing will now stop.
-      console.log('A list failed to process');
+      	console.log('A list failed to process');
     } else {
-      console.log('All lists have been processed successfully');
+      	console.log('All lists have been processed successfully');
     }
 });
+
+function uploadNewList(name, newJson) {
+	s3bucket.createBucket(function() {
+		var params = {Key: 'last/' + name + '.json', Body: newJson};
+		s3bucket.upload(params, function(err) {
+			if (err) {
+				console.log('Error uploading data: ', err);
+			} else {
+				console.log('Successfully uploaded last/' + name + '.json');
+			}
+		});
+	});
+}
