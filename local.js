@@ -42,7 +42,7 @@ async.each(lists, function(list) {
 			var json = [];
 
 			// Adding the rules.
-			for (var i = 0; i < rules.length; i++) {
+			for (var i = 1; i < rules.length; i++) {
 				if (parser.isRule(rules[i])) {
 					rule = parser.parseRule(rules[i]);
 					if (rule !== undefined) {

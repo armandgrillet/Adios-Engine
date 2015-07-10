@@ -4,6 +4,8 @@ var parser = require('./parser');
 var request = require('request');
 var aws = require('aws-sdk');
 var async = require('async');
+var archiver = require("archiver");
+
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
@@ -23,7 +25,7 @@ async.each(lists, function(list) {
 			var json = [];
 
 			// fs.writeFileSync('./easylist.json', '[\n');
-			for (var i = 0; i < rules.length; i++) {
+			for (var i = 1; i < rules.length; i++) {
 				if (i !== 0 && parser.parseRule(rules[i]) != null) {
 					if (parser.isRule(rules[i])) {
 						rule = parser.parseRule(rules[i]);
@@ -46,13 +48,17 @@ async.each(lists, function(list) {
 					uploadNewList(list.name, JSON.stringify(json));
 				} else {
 					if (data.Body.toString() !== JSON.stringify(json)) {
+						// Creation of the zip containing the JSON
+						var zip = TODO;
+
+						// We send the file
 						s3bucket.createBucket(function() {
-							var params = {Key: list.name + '/' + Date.now() + '.json', Body: JSON.stringify(data.Body.toString())};
+							var params = {Key: list.name + '/' + Date.now() + '.zip', Body: zip.toBuffer()};
 							s3bucket.upload(params, function(err, data) {
 								if (err) {
 									console.log('Error uploading data: ', err);
 								} else {
-									console.log('Successfully uploaded data to ' + list.name + '/' + Date.now() + '.json');
+									console.log('Successfully uploaded data to ' + list.name + '/' + Date.now() + '.zip');
 									uploadNewList(list.name, JSON.stringify(json));
 								}
 							});
@@ -66,7 +72,7 @@ async.each(lists, function(list) {
 		}
 	});
 }, function(err){
-    if( err ) {
+    if (err) {
       	console.log('A list failed to process');
     } else {
       	console.log('All lists have been processed successfully');

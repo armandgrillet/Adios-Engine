@@ -12,7 +12,8 @@
     "request": "latest",
     "async": "latest",
     "punycode": "latest",
-    "jsonfile": "latest"
+    "jsonfile": "latest",
+    "archiver": "latest"
   },
   "engines": {
     "iojs": "2.3.x"
