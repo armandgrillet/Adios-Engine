@@ -91,7 +91,7 @@ async.each(lists, function(list) {
 	});
 }, function(err){
     if (err) {
-      	console.log('A list failed to process');
+      	console.log('One of the list failed to process');
     } else {
       	console.log('All lists have been processed successfully');
     }
