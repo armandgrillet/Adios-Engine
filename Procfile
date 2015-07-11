@@ -1,1 +1,1 @@
-clock: node checker.js
+worker: node task.js

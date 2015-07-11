@@ -2,9 +2,6 @@
   "name": "adios-parser",
   "version": "0.0.1",
   "description": "Parsing the ABP lists and pushing them in ",
-  "scripts": {
-    "start": "node checker.js"
-  },
   "dependencies": {
     "aws-sdk": "latest",
     "dotenv": "^1.2.0",
@@ -12,8 +9,7 @@
     "request": "latest",
     "async": "latest",
     "punycode": "latest",
-    "jsonfile": "latest",
-    "archiver": "latest"
+    "jsonfile": "latest"
   },
   "engines": {
     "iojs": "2.3.x"
