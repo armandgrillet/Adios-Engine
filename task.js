@@ -67,7 +67,7 @@ async.each(lists, function(list) {
 
 			s3bucket.getObject({Key: list.name + '.json'}, function(err, data) {
 				if (err) {
-					console.log('Error downloading ' + list.name + '.json: not found');
+					console.log('Error downloading ' + list.name + '.json on S3: not found');
 					uploadNewList(list.name, JSON.stringify(json));
 				} else {
 					var now = new Date();
@@ -85,6 +85,8 @@ async.each(lists, function(list) {
 					}
 				}
 			});
+		} else {
+			console.log('Error downloading the list ' + list.name);
 		}
 	});
 }, function(err){
