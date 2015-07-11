@@ -1,6 +1,6 @@
 {
   "name": "adios-parser",
-  "version": "0.0.1",
+  "version": "0.1",
   "description": "Parsing the ABP lists and pushing them in ",
   "dependencies": {
     "aws-sdk": "latest",
