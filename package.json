@@ -9,7 +9,13 @@
     "request": "latest",
     "async": "latest",
     "punycode": "latest",
-    "jsonfile": "latest"
+    "jsonfile": "latest",
+    "node-fetch": "latest",
+    "diff": "latest"
+  },
+  "devDependencies": {
+    "eslint": "latest",
+    "babel-eslint": "latest"
   },
   "engines": {
     "iojs": "2.3.x"

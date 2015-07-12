@@ -243,7 +243,7 @@ String.prototype.hasTidle = function() {
 
 module.exports = {
 	isRule: function(line) {
-		if (line.length > 0 && line.charAt(0) !== '!') {
+		if (line.length > 0 && line.charAt(0) !== '!' && line.indexOf(' ') === -1) {
 			return true;
 		}
 		return false;
@@ -337,6 +337,27 @@ module.exports = {
 				return {'trigger': trigger, 'action': action};
 			}
 		}
+	},
+	parseRules: function(rulesContainer) {
+		var json = [];
+		var rule;
+
+		for (var i in rulesContainer) {
+			if (this.isRule(rulesContainer[i])) {
+				if (this.parseRule(rulesContainer[i]) != null) {
+					rule = this.parseRule(rulesContainer[i]);
+					if (rule !== undefined) {
+						if (rule instanceof Array) { // Multiple rules, exceptionnal case due to the exclusivity of if-domain and unless-domain
+							for (var realRule in rule) {
+								json.push(rule[realRule]);
+							}
+						} else {
+							json.push(rule);
+						}
+					}
+				}
+			}
+		}
+		return json;
 	}
 };
-

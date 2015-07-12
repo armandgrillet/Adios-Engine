@@ -1,0 +1,43 @@
+[Adblock Plus 2.0]
+! Checksum: tZhGKqsPDKXBLdQguCe50g
+! Version: 201507120820
+! Title: EasyList
+! Last modified: 12 Jul 2015 08:20 UTC
+! Expires: 4 days (update frequency)
+! Homepage: https://easylist.adblockplus.org/
+! Licence: https://easylist-downloads.adblockplus.org/COPYING
+!
+! Please report any unblocked adverts or problems
+! in the forums (https://forums.lanik.us/)
+! or via e-mail (easylist.subscription@gmail.com).
+!
+!-----------------------General advert blocking filters-----------------------!
+! *** easylist:easylist/easylist_general_block.txt ***
+&ad_box_
+&ad_channel=
+&ad_classid=
+&ad_height=
+&ad_keyword=
+&ad_number=
+&ad_type=
+&ad_type_
+&ad_url=
+&ad_zones=
+&adbannerid=
+&adclient=
+&adcount=
+&adgroupid=
+&admeld_
+&admid=
+&adname=
+&adnet=
+&adnum=
+&adpageurl=
+&adsafe=
+&adserve=
+&adsize=
+&adslot=
+&adslots=
+&adsourceid=
+&adspace=
+&adstype=

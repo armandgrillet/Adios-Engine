@@ -1,6 +1,6 @@
 'use strict';
 
-var parser = require('./parser');
+var parser = require('../utils/parser');
 
 // Blocking by address parts
 
