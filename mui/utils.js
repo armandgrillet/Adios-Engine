@@ -11,17 +11,28 @@ function hideUpdater() {
 	document.getElementById('updater').style.display = 'none';
 }
 
-function update() {
-	console.log('Yo');
-	var record = {
-		recordName: 'Yo',
-		recordType: 'Lists'
+function update(info) {
+	console.log(info);
+	// var record = {
+	// 	recordName: 'Yo',
+	// 	recordType: 'Lists'
+	// };
+ //  container.publicCloudDatabase.saveRecord(record).then(function(response) {
+ //    	if(response.hasErrors) {
+ //    		console.log(response.errors[0]);
+ //    	}
+ //  	});
+}
+
+function getUpdates() {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() {
+		if (xmlHttp.readyState === 4 && (xmlHttp.status === 200 || xmlHttp.status === 0)) {
+			update(xmlHttp.responseText);
+		}
 	};
-  container.publicCloudDatabase.saveRecord(record).then(function(response) {
-    	if(response.hasErrors) {
-    		console.log(response.errors[0]);
-    	}
-  	});
+    xmlHttp.open( 'GET', '/update', true );
+    xmlHttp.send( null );
 }
 
 function init() {
@@ -47,5 +58,5 @@ function init() {
 		}
     });
     container.whenUserSignsOut().then(hideUpdater);
-    document.getElementById('update').onclick = update;
+    document.getElementById('update').onclick = getUpdates;
 }

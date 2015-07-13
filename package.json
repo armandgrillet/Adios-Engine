@@ -13,7 +13,8 @@
     "node-fetch": "latest",
     "diff": "latest",
     "ejs": "latest",
-    "path": "latest"
+    "path": "latest",
+    "connect-wwwhisper": "*"
   },
   "devDependencies": {
     "eslint": "latest",
