@@ -1,1 +1,1 @@
-worker: node task.js
+web: node index.js

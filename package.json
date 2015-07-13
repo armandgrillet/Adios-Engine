@@ -4,21 +4,23 @@
   "description": "Parsing the ABP lists and pushing them in ",
   "dependencies": {
     "aws-sdk": "latest",
-    "dotenv": "^1.2.0",
+    "dotenv": "latest",
     "express": "latest",
     "request": "latest",
     "async": "latest",
     "punycode": "latest",
     "jsonfile": "latest",
     "node-fetch": "latest",
-    "diff": "latest"
+    "diff": "latest",
+    "ejs": "latest",
+    "path": "latest"
   },
   "devDependencies": {
     "eslint": "latest",
     "babel-eslint": "latest"
   },
   "engines": {
-    "iojs": "2.3.x"
+    "iojs": "latest"
   },
   "repository": {
     "type": "git",
