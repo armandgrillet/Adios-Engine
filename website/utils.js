@@ -13,15 +13,15 @@ function hideUpdater() {
 
 function update(info) {
 	console.log(info);
-	// var record = {
-	// 	recordName: 'Yo',
-	// 	recordType: 'Lists'
-	// };
- //  container.publicCloudDatabase.saveRecord(record).then(function(response) {
- //    	if(response.hasErrors) {
- //    		console.log(response.errors[0]);
- //    	}
- //  	});
+	var record = {
+		recordName: 'Yo',
+		recordType: 'Lists'
+	};
+  container.publicCloudDatabase.saveRecord(record).then(function(response) {
+    	if(response.hasErrors) {
+    		console.log(response.errors[0]);
+    	}
+  	});
 }
 
 function getUpdates() {
