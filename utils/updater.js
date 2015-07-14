@@ -16,8 +16,8 @@ function uploadChanges(name, newList, differences, callback) {
 		updates.log += name + ' didn\'t changed (' + now + ')\n';
 		callback();
 	} else {
-		console.log(newList + ' changed: ' + differences.added.length + ' rules added and ' + differences.removed.length + ' rules removed');
-		updates.log += newList + ' changed: ' + differences.added.length + ' rules added and ' + differences.removed.length + ' rules removed\n';
+		console.log(name + ' changed: ' + differences.added.length + ' rules added and ' + differences.removed.length + ' rules removed');
+		updates.log += name + ' changed: ' + differences.added.length + ' rules added and ' + differences.removed.length + ' rules removed\n';
 		awsManager.uploadNewList(name, newList, function(errUpload) {
 			if (errUpload) {
 				console.log('Error uploading rules/' + name + '.txt');
@@ -33,12 +33,13 @@ function uploadChanges(name, newList, differences, callback) {
 						console.log(errUploadUpdates);
 						updates.log += errUploadUpdates + '\n';
 						callback(updates.log);
+					} else {
+						console.log('Successfully uploaded the updates in S3 for ' + name);
+						updates.log += 'Successfully uploaded the updates in S3 for ' + name + '\n';
+						updates.lists.push(name);
+						updates[name] = {'added': rulesAdded, 'removed': rulesRemoved};
+						callback();
 					}
-					console.log('Successfully uploaded the updates in S3 for ' + name);
-					updates.log += 'Successfully uploaded the updates in S3 for ' + name + '\n';
-					updates.lists.push(name);
-					updates[name] = {'added': rulesAdded, 'removed': rulesRemoved};
-					callback();
 				});
 			}
 		});
@@ -71,9 +72,9 @@ module.exports = {
 			if (err) {
 				callback({'log': err, 'lists': []});
 			} else {
+				console.log('All lists have been processed successfully');
 				updates.log += 'All lists have been processed successfully\n';
-				// callback(updates);
-				callback({'log': err, 'lists': []});
+				callback(updates);
 			}
 		});
 	}

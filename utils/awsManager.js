@@ -22,32 +22,34 @@ module.exports = {
 	},
 	uploadUpdates: function(list, rulesAdded, rulesRemoved, callback) {
 		var now = Date.now();
-		if (rulesAdded.length > 0) {
+		if (rulesAdded !== []) {
 			s3bucket.createBucket(function() {
 				s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/add_' + now + '.json', Body: JSON.stringify(rulesAdded, null, '\t')})
 				.send(function(errUploadRulesAdded) {
 					if (errUploadRulesAdded) {
 						callback(errUploadRulesAdded);
 					} else {
-						if (rulesRemoved.length > 0) {
+						if (rulesRemoved !== []) {
 							s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/remove_' + now + '.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
 							.send(function(errUploadRulesRemoved) {
 								if (errUploadRulesRemoved) {
 									callback(errUploadRulesRemoved);
+								} else {
+									callback();
 								}
-								callback();
 							});
 						}
 					}
 				});
 			});
-		} else if (rulesRemoved.length > 0) {
+		} else if (rulesRemoved !== []) {
 			s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/remove_' + now + '.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
 			.send(function(errUploadRulesRemoved) {
 				if (errUploadRulesRemoved) {
 					callback(errUploadRulesRemoved);
+				} else {
+					callback();
 				}
-				callback();
 			});
 		}
 	}
