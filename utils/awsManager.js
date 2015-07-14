@@ -1,6 +1,7 @@
 'use strict';
 
 var aws = require('aws-sdk');
+require('dotenv').load();
 
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,

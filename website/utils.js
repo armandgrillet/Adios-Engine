@@ -12,7 +12,8 @@ function hideUpdater() {
 }
 
 function update(info) {
-	console.log(info);
+	var updates = JSON.parse(info);
+	console.log(updates);
 	var record = {
 		recordName: 'Yo',
 		recordType: 'Lists'
@@ -35,17 +36,19 @@ function getUpdates() {
     xmlHttp.send( null );
 }
 
-function init() {
+function init(configuration) {
+	var config = JSON.parse(configuration);
+
 	CloudKit.configure({
       containers: [{
 
         // Change this to a container identifier you own.
-        containerIdentifier: 'iCloud.AG.Adios.List',
+        containerIdentifier: config.containerIdentifier,
 
         // And generate an API token through CloudKit Dashboard.
-        apiToken: '31e0b2d6eb84ef68476dd53b993b6480d51bf576612cd6a084affbb9e990e0de',
+        apiToken: config.apiToken,
 
-        environment: 'development'
+        environment: config.environment
       }]
     });
     container = CloudKit.getDefaultContainer();
@@ -59,4 +62,15 @@ function init() {
     });
     container.whenUserSignsOut().then(hideUpdater);
     document.getElementById('update').onclick = getUpdates;
+}
+
+function configureCloudKit() {
+	var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() {
+		if (xmlHttp.readyState === 4 && (xmlHttp.status === 200 || xmlHttp.status === 0)) {
+			init(xmlHttp.responseText);
+		}
+	};
+    xmlHttp.open( 'GET', '/cloudkit', true );
+    xmlHttp.send( null );
 }

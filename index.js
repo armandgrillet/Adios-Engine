@@ -5,6 +5,7 @@ var path = require('path');
 var wwwhisper = require('connect-wwwhisper');
 
 var updater = require('./utils/updater');
+var cloudkitConfiguration = require('./utils/cloudkitConfiguration');
 
 require('dotenv').load();
 
@@ -19,6 +20,13 @@ app.listen(app.get('port'), function() {
 
 app.get('/', function(req, response) {
     response.sendFile(path.join(__dirname + '/website/index.html'));
+});
+
+app.use('/cloudkit', function (req, res) {
+	res.setHeader('Content-Type', 'application/json');
+    cloudkitConfiguration.getConfig(function(data) {
+		res.send(data);
+    });
 });
 
 app.use('/update', function (req, res) {
