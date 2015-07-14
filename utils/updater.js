@@ -37,36 +37,78 @@ function uploadChanges(name, newList, differences) {
 module.exports = {
 	getUpdates: function(callback) {
 		console.log('getUpdates()');
-		updates = {'log': ''};
-		async.each(listsManager.getList(), function(list, cb) {
-			request(list.url, function (error, response, listFromTheInternet) {
-				if (!error && response.statusCode === 200) {
-					awsManager.downloadOldList(list.name, function(errDownload, data) {
-						if (errDownload) {
-							console.log('Error downloading rules/' + list.name + '.txt on S3: not found');
-							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet));
-						} else {
-							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists(data.Body.toString(), listFromTheInternet));
+		// updates = {'log': ''};
+		// async.each(listsManager.getList(), function(list, cb) {
+		// 	request(list.url, function (error, response, listFromTheInternet) {
+		// 		if (!error && response.statusCode === 200) {
+		// 			awsManager.downloadOldList(list.name, function(errDownload, data) {
+		// 				if (errDownload) {
+		// 					console.log('Error downloading rules/' + list.name + '.txt on S3: not found');
+		// 					uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet));
+		// 				} else {
+		// 					uploadChanges(list.name, listFromTheInternet, listsManager.diffLists(data.Body.toString(), listFromTheInternet));
+		// 				}
+		// 				cb();
+		// 			});
+		// 		} else {
+		// 			console.log('Error downloading the list ' + list.name);
+		// 			updates.log += 'Error downloading the list ' + list.name + '\n';
+		// 			cb({'log': updates.log});
+		// 		}
+		// 	});
+		// }, function(err) {
+		// 	if (err) {
+		// 		console.log('One of the list failed to process');
+		// 		updates.log += 'One of the list failed to process\n';
+		// 		callback({'log': updates.log});
+		// 	} else {
+		// 		console.log('All lists have been processed successfully');
+		// 		updates.log += 'All lists have been processed successfully\n';
+		// 		callback(updates);
+		// 	}
+		// });
+		callback({'log': 'test', 'lists': ['AdiosList'],
+			'AdiosList': {
+				'added': [
+					{
+						'trigger': {
+							'url-filter': '\\.com/e3lan/',
+							'url-filter-is-case-sensitive': true
+						},
+						'action': {
+							'type': 'block'
 						}
-						cb();
-					});
-				} else {
-					console.log('Error downloading the list ' + list.name);
-					updates.log += 'Error downloading the list ' + list.name + '\n';
-					cb({'log': updates.log});
-				}
-			});
-		}, function(err) {
-			if (err) {
-				console.log('One of the list failed to process');
-				updates.log += 'One of the list failed to process\n';
-				callback({'log': updates.log});
-			} else {
-				console.log('All lists have been processed successfully');
-				updates.log += 'All lists have been processed successfully\n';
-				callback(updates);
+					},
+					{
+						'trigger': {
+							'url-filter': '\\.com/e3lanat/'
+						},
+						'action': {
+							'type': 'block'
+						}
+					}
+				],
+				'removed': [
+					{
+						'trigger': {
+							'url-filter': '\\.com/e3lfsdsregfan/',
+							'if-domain': ['yo.com']
+						},
+						'action': {
+							'type': 'block'
+						}
+					},
+					{
+						'trigger': {
+							'url-filter': '\\.com/eeazrearzezr3lanat/'
+						},
+						'action': {
+							'type': 'block'
+						}
+					}
+				]
 			}
-		});
+	});
 		// callback({'log': 'test',
 		// 	'EasyList_Test': {
 		// 		'added': [

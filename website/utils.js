@@ -11,48 +11,96 @@ function hideUpdater() {
 	document.getElementById('updater').style.display = 'none';
 }
 
+function constructRule(listName, data) {
+	var rule = { recordType: 'Rules' };
+	var fieldsValue = {
+		ActionType: { value: data.action.type },
+		TriggerFilter: { value: data.trigger['url-filter'] },
+		List: { value: { recordName: listName, action: 'DELETE_SELF' }}
+	};
+
+	if (data.action.selector != null) {
+		fieldsValue.ActionSelector = { value: data.action.selector };
+	}
+
+	if (data.trigger['url-filter-is-case-sensitive'] != null) {
+		fieldsValue.TriggerFilterCaseSensitive = { value: data.trigger['url-filter-is-case-sensitive'] };
+	}
+
+	if (data.trigger['if-domain'] != null) {
+		fieldsValue.TriggerIfDomain = { value: data.trigger['if-domain'] };
+	}
+
+	if (data.trigger['unless-domain'] != null) {
+		fieldsValue.TriggerUnlessDomain = { value: data.trigger['unless-domain'] };
+	}
+
+	if (data.trigger['load-type'] != null) {
+		fieldsValue.TriggerLoadType = { value: data.trigger['load-type'] };
+	}
+
+	if (data.trigger['resource-type'] != null) {
+		fieldsValue.TriggerResourceType = { value: data.trigger['resource-type'] };
+	}
+
+	rule.fields = fieldsValue;
+	console.log(rule);
+	return rule;
+}
+
 function update(info) {
 	var updates = JSON.parse(info);
 	document.getElementById('log').innerText = updates.log;
 
-	var operation = container.publicCloudDatabase.newRecordsBatch();
-
-	var lists = [
-			'AdiosList',
-			'EasyPrivacy',
-			'AdblockWarningRemoval',
-			'EasyList_France',
-			'EasyList_Germany',
-			'EasyList_Italy',
-			'EasyList_Dutch',
-			'EasyList_China',
-			'EasyList_Bulgaria',
-			'EasyList_Indonesia',
-			'EasyList_Arabic',
-			'EasyList_Czechoslovakia',
-			'EasyList_Hebrew',
-			'EasyList_SocialMedia',
-			'EasyList_Latvia',
-			'EasyList_Romania',
-			'EasyList_Russia',
-			'EasyList_Iceland',
-			'EasyList_Greece',
-			'EasyList_Poland',
-			'List_Japan',
-			'List_Estonia',
-			'List_Hungary',
-			'List_Danish',
-			'List_England'
-		];
-
-	for (var i in lists) {
-		operation.create({recordName: lists[i], recordType: 'Lists'});
+	if (updates.lists !== undefined) {
+		var operations = container.publicCloudDatabase.newRecordsBatch();
+		// var i = 0;
+		// for (i = 0; i < updates.lists.length; i++) {
+		// 	var modifications = updates[updates.lists[i]];
+		// 	var modif;
+		// 	for (modif in modifications.added) {
+		// 		operations.create(constructRule(updates.lists[i], modifications.added[modif]));
+		// 	}
+		// 	for (modif in modifications.removed) {
+		// 		operations.delete(constructRule(updates.lists[i], modifications.removed[modif]));
+		// 	}
+		// }
+		// operations.create({recordType: 'Rules', fields: {ActionType: {value: "block"}, TriggerFilter: {value: "\.com/eeazrearzezr3lanat/"}, List: {value: "AdiosList"}}});
+		operations.create({
+			recordType: 'Rules',
+			fields: {
+				ActionType: {
+					value: 'block'
+				},
+				TriggerFilter: {
+					value: '\.com/e3lfsdsregfan/'
+				},
+				List: {
+					value: {
+						recordName: 'AdiosList',
+						action: 'DELETE_SELF'
+					}
+				},
+				TriggerIfDomain: {
+					value: ['yo.com']
+				}
+			}
+		});
+		// operations.create({
+		// 	recordType: 'Rules',
+		// 	fields: {
+		// 		ActionType: {
+		// 			value: 'block'
+		// 		}
+		// 	}
+		// });
+		operations.commit().then(function(response) {
+			console.log('Yo');
+			if(response.hasErrors) {
+				console.log(response.errors[0]);
+			}
+		});
 	}
-	operation.commit().then(function(response) {
-		if(response.hasErrors) {
-			console.log(response.errors[0]);
-		}
-	});
 }
 
 function getUpdates() {
