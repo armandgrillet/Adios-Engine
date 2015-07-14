@@ -67,5 +67,45 @@ module.exports = {
 				callback(updates);
 			}
 		});
+		// callback({'log': 'test',
+		// 	'EasyList_Test': {
+		// 		'added': [
+		// 			{
+		// 				'trigger': {
+		// 					'url-filter': '\\[Adblock Plus 2\\.0\\]'
+		// 				},
+		// 				'action': {
+		// 					'type': 'block'
+		// 				}
+		// 			},
+		// 			{
+		// 				'trigger': {
+		// 					'url-filter': '\\.com/e3lan/'
+		// 				},
+		// 				'action': {
+		// 					'type': 'block'
+		// 				}
+		// 			}
+		// 		],
+		// 		'removed': [
+		// 			{
+		// 				'trigger': {
+		// 					'url-filter': '\\[Adblock Plus 2\\.0\\]'
+		// 				},
+		// 				'action': {
+		// 					'type': 'block'
+		// 				}
+		// 			},
+		// 			{
+		// 				'trigger': {
+		// 					'url-filter': '\\.com/e3lan/'
+		// 				},
+		// 				'action': {
+		// 					'type': 'block'
+		// 				}
+		// 			}
+		// 		]
+		// 	}
+		// });
 	}
 };

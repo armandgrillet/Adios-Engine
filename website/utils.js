@@ -13,12 +13,42 @@ function hideUpdater() {
 
 function update(info) {
 	var updates = JSON.parse(info);
-	console.log(updates);
-	var record = {
-		recordName: 'Yo',
-		recordType: 'Lists'
-	};
-  container.publicCloudDatabase.saveRecord(record).then(function(response) {
+	document.getElementById('log').innerText = updates.log;
+
+	var operation = container.publicCloudDatabase.newRecordsBatch();
+
+	var lists = [
+			'AdiosList',
+			'EasyPrivacy',
+			'AdblockWarningRemoval',
+			'EasyList_France',
+			'EasyList_Germany',
+			'EasyList_Italy',
+			'EasyList_Dutch',
+			'EasyList_China',
+			'EasyList_Bulgaria',
+			'EasyList_Indonesia',
+			'EasyList_Arabic',
+			'EasyList_Czechoslovakia',
+			'EasyList_Hebrew',
+			'EasyList_SocialMedia',
+			'EasyList_Latvia',
+			'EasyList_Romania',
+			'EasyList_Russia',
+			'EasyList_Iceland',
+			'EasyList_Greece',
+			'EasyList_Poland',
+			'List_Japan',
+			'List_Estonia',
+			'List_Hungary',
+			'List_Danish',
+			'List_England'
+		];
+
+	for (var i in lists) {
+		operation.create({recordName: lists[i], recordType: 'Lists'});
+	}
+	operation.commit().then(function(response) {
 		if(response.hasErrors) {
 			console.log(response.errors[0]);
 		}
