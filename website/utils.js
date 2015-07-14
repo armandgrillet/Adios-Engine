@@ -3,12 +3,12 @@
 var container;
 
 function displayUpdater(userInfo) {
-	document.getElementById('updater').style.display = 'block';
+	document.getElementById('update').style.display = 'block';
 	document.getElementById('user').innerText = userInfo.userRecordName;
 }
 
 function hideUpdater() {
-	document.getElementById('updater').style.display = 'none';
+	document.getElementById('update').style.display = 'none';
 }
 
 function constructRule(listName, data) {
