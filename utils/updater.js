@@ -47,7 +47,7 @@ module.exports = {
 					awsManager.downloadOldList(list.name, function(errDownload, data) {
 						if (errDownload) {
 							updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found\n';
-							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet, cb));
+							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet), cb);
 						} else {
 							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists(data.Body.toString(), listFromTheInternet), cb);
 						}
@@ -61,7 +61,6 @@ module.exports = {
 			if (err) {
 				callback({'log': err, 'lists': []});
 			} else {
-				console.log('All lists have been processed successfully');
 				updates.log += 'All lists have been processed successfully\n';
 				callback(updates);
 			}
