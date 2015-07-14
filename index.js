@@ -9,7 +9,7 @@ var updater = require('./utils/updater');
 require('dotenv').load();
 
 var app = express();
-app.set('port', 5000);
+app.set('port', (process.env.PORT || 5000));
 app.use(wwwhisper());
 app.use(express.static(__dirname + '/website'));
 

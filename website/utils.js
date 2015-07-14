@@ -18,10 +18,10 @@ function update(info) {
 		recordType: 'Lists'
 	};
   container.publicCloudDatabase.saveRecord(record).then(function(response) {
-    	if(response.hasErrors) {
-    		console.log(response.errors[0]);
-    	}
-  	});
+		if(response.hasErrors) {
+			console.log(response.errors[0]);
+		}
+	});
 }
 
 function getUpdates() {
