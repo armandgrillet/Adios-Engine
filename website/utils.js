@@ -23,8 +23,8 @@ function constructRule(listName, data) {
 		fieldsValue.ActionSelector = { value: data.action.selector };
 	}
 
-	if (data.trigger['url-filter-is-case-sensitive'] != null) {
-		fieldsValue.TriggerFilterCaseSensitive = { value: data.trigger['url-filter-is-case-sensitive'] };
+	if (data.trigger['url-filter-is-case-sensitive'] === true) {
+			fieldsValue.TriggerFilterCaseSensitive = { value: 1 };
 	}
 
 	if (data.trigger['if-domain'] != null) {
@@ -44,7 +44,6 @@ function constructRule(listName, data) {
 	}
 
 	rule.fields = fieldsValue;
-	console.log(rule);
 	return rule;
 }
 
@@ -52,52 +51,24 @@ function update(info) {
 	var updates = JSON.parse(info);
 	document.getElementById('log').innerText = updates.log;
 
-	if (updates.lists !== undefined) {
+	if (updates.lists.length > 0) {
 		var operations = container.publicCloudDatabase.newRecordsBatch();
-		// var i = 0;
-		// for (i = 0; i < updates.lists.length; i++) {
-		// 	var modifications = updates[updates.lists[i]];
-		// 	var modif;
-		// 	for (modif in modifications.added) {
-		// 		operations.create(constructRule(updates.lists[i], modifications.added[modif]));
-		// 	}
-		// 	for (modif in modifications.removed) {
-		// 		operations.delete(constructRule(updates.lists[i], modifications.removed[modif]));
-		// 	}
-		// }
-		// operations.create({recordType: 'Rules', fields: {ActionType: {value: "block"}, TriggerFilter: {value: "\.com/eeazrearzezr3lanat/"}, List: {value: "AdiosList"}}});
-		operations.create({
-			recordType: 'Rules',
-			fields: {
-				ActionType: {
-					value: 'block'
-				},
-				TriggerFilter: {
-					value: '\.com/e3lfsdsregfan/'
-				},
-				List: {
-					value: {
-						recordName: 'AdiosList',
-						action: 'DELETE_SELF'
-					}
-				},
-				TriggerIfDomain: {
-					value: ['yo.com']
-				}
+		var i;
+		var modifications;
+		var modif;
+		for (i = 0; i < updates.lists.length; i++) {
+			modifications = updates[updates.lists[i]];
+			for (modif in modifications.added) {
+				operations.create(constructRule(updates.lists[i], modifications.added[modif]));
 			}
-		});
-		// operations.create({
-		// 	recordType: 'Rules',
-		// 	fields: {
-		// 		ActionType: {
-		// 			value: 'block'
-		// 		}
-		// 	}
-		// });
+			for (modif in modifications.removed) {
+				operations.delete(constructRule(updates.lists[i], modifications.removed[modif]));
+			}
+		}
 		operations.commit().then(function(response) {
-			console.log('Yo');
+			document.getElementById('log').innerText += 'Successful upload to CloudKit';
 			if(response.hasErrors) {
-				console.log(response.errors[0]);
+				document.getElementById('log').innerText += response.errors[0];
 			}
 		});
 	}
