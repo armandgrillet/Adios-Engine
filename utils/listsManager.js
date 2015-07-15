@@ -23,7 +23,7 @@ module.exports = {
 		}
 	},
 	getList: function() {
-		return [{'name': 'EasyList_Bulgaria', 'url': 'http://stanev.org/abp/adblock_bg.txt'}];
+		return [{'name': 'EasyList_Hebrew', 'url': 'https://raw.githubusercontent.com/AdBlockPlusIsrael/EasyListHebrew/master/EasyListHebrew.txt'}];
 	},
 	getLists: function() {
 		return [

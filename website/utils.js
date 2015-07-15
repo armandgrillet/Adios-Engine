@@ -28,10 +28,12 @@ function constructRule(listName, data) {
 	}
 
 	if (data.trigger['if-domain'] != null) {
+		console.log('If domain: ' + data.trigger['if-domain']);
 		fieldsValue.TriggerIfDomain = { value: data.trigger['if-domain'] };
 	}
 
 	if (data.trigger['unless-domain'] != null) {
+		console.log('Unless domain: ' + data.trigger['unless-domain']);
 		fieldsValue.TriggerUnlessDomain = { value: data.trigger['unless-domain'] };
 	}
 
@@ -44,10 +46,12 @@ function constructRule(listName, data) {
 	}
 
 	rule.fields = fieldsValue;
+	console.log(rule);
 	return rule;
 }
 
 function update(info) {
+	// LIMIT: 200 REQUESTS
 	var updates = JSON.parse(info);
 	document.getElementById('log').innerText = updates.log;
 
