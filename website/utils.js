@@ -4,7 +4,6 @@ var container;
 
 function displayUpdater(userInfo) {
 	document.getElementById('update').style.display = 'block';
-	document.getElementById('user').innerText = userInfo.userRecordName;
 }
 
 function hideUpdater() {
@@ -50,31 +49,50 @@ function constructRule(listName, data) {
 	return rule;
 }
 
+function commit(operations, operationNumber) {
+	operations[operationNumber].commit().then(function(response) {
+		if(response.hasErrors) {
+			document.getElementById('log').innerText += 'Error for operation ' + operationNumber + '\n';
+			document.getElementById('log').innerText += response.errors[0];
+		} else {
+			if (operationNumber === (operations.length - 1)) {
+				document.getElementById('log').innerText += 'Successful upload to CloudKit';
+			} else {
+				commit(operations, operationNumber + 1);
+			}
+		}
+	});
+}
+
 function update(info) {
-	// LIMIT: 200 REQUESTS
 	var updates = JSON.parse(info);
 	document.getElementById('log').innerText = updates.log;
 
 	if (updates.lists.length > 0) {
-		var operations = container.publicCloudDatabase.newRecordsBatch();
+		var operations = [];
 		var i;
+		var operationNumber = 0;
+		var maxOperationsPerBatch = 190;
 		var modifications;
 		var modif;
 		for (i = 0; i < updates.lists.length; i++) {
 			modifications = updates[updates.lists[i]];
 			for (modif in modifications.added) {
-				operations.create(constructRule(updates.lists[i], modifications.added[modif]));
+				if (operationNumber % maxOperationsPerBatch === 0) {
+					operations.push(container.publicCloudDatabase.newRecordsBatch());
+				}
+				operations[Math.floor(operationNumber / maxOperationsPerBatch)].create(constructRule(updates.lists[i], modifications.added[modif]));
+				operationNumber++;
 			}
 			for (modif in modifications.removed) {
-				operations.delete(constructRule(updates.lists[i], modifications.removed[modif]));
+				if (operationNumber % maxOperationsPerBatch === 0) {
+					operations.push(container.publicCloudDatabase.newRecordsBatch());
+				}
+				operations[Math.floor(operationNumber / maxOperationsPerBatch)].delete(constructRule(updates.lists[i], modifications.removed[modif]));
+				operationNumber++;
 			}
 		}
-		operations.commit().then(function(response) {
-			document.getElementById('log').innerText += 'Successful upload to CloudKit';
-			if(response.hasErrors) {
-				document.getElementById('log').innerText += response.errors[0];
-			}
-		});
+		commit(operations, 0);
 	}
 }
 
