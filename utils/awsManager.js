@@ -24,13 +24,13 @@ module.exports = {
 		var now = Date.now();
 		if (rulesAdded.length > 0) {
 			s3bucket.createBucket(function() {
-				s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/add_' + now + '.json', Body: JSON.stringify(rulesAdded, null, '\t')})
+				s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_add.json', Body: JSON.stringify(rulesAdded, null, '\t')})
 				.send(function(errUploadRulesAdded) {
 					if (errUploadRulesAdded) {
 						callback(errUploadRulesAdded);
 					} else {
 						if (rulesRemoved.length > 0) {
-							s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/remove_' + now + '.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
+							s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_remove.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
 							.send(function(errUploadRulesRemoved) {
 								if (errUploadRulesRemoved) {
 									callback(errUploadRulesRemoved);
@@ -45,7 +45,7 @@ module.exports = {
 				});
 			});
 		} else if (rulesRemoved.length > 0) {
-			s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/remove_' + now + '.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
+			s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_remove.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
 			.send(function(errUploadRulesRemoved) {
 				if (errUploadRulesRemoved) {
 					callback(errUploadRulesRemoved);
