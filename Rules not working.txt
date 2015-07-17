@@ -1,7 +1,0 @@
-fields: Object
-ActionSelector: {value: ".leftSideBanner"}
-ActionType: {value: "css-display-none"}
-List: {value: {recordName: "EasyList_Hebrew", action: "DELETE_SELF"}}
-TriggerFilter: {value: ".*"}
-TriggerIfDomain: {value: ["*zap.co.il"]}
-recordType: "Rules"
