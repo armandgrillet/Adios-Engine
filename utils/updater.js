@@ -10,14 +10,14 @@ var parser = require('./parser');
 var updates;
 
 function uploadChanges(name, newList, differences, callback) {
-	if (differences.added.length === 0 && differences.removed.length === 0) {
+	if (differences.added.length === 0 && differences.deleted.length === 0) {
 		var now = new Date();
 		console.log(name + ' didn\'t changed (' + now + ')');
 		updates.log += name + ' didn\'t changed (' + now + ')\n';
 		callback();
 	} else {
-		console.log(name + ' changed: ' + differences.added.length + ' rules added and ' + differences.removed.length + ' rules removed');
-		updates.log += name + ' changed: ' + differences.added.length + ' rules added and ' + differences.removed.length + ' rules removed\n';
+		console.log(name + ' changed: ' + differences.added.length + ' rules added and ' + differences.deleted.length + ' rules deleted');
+		updates.log += name + ' changed: ' + differences.added.length + ' rules added and ' + differences.deleted.length + ' rules deleted\n';
 		awsManager.uploadNewList(name, newList, function(errUpload) {
 			if (errUpload) {
 				console.log('Error uploading rules/' + name + '.txt');
@@ -27,8 +27,8 @@ function uploadChanges(name, newList, differences, callback) {
 				console.log('Successfully uploaded rules/' + name + '.txt');
 				updates.log += 'Successfully uploaded rules/' + name + '.txt\n';
 				var rulesAdded = parser.parseRules(differences.added);
-				var rulesRemoved = parser.parseRules(differences.removed);
-				awsManager.uploadUpdates(name, rulesAdded, rulesRemoved, function(errUploadUpdates) {
+				var rulesDeleted = parser.parseRules(differences.deleted);
+				awsManager.uploadUpdates(name, rulesAdded, rulesDeleted, function(errUploadUpdates) {
 					if (errUploadUpdates) {
 						console.log(errUploadUpdates);
 						updates.log += errUploadUpdates + '\n';
@@ -37,7 +37,7 @@ function uploadChanges(name, newList, differences, callback) {
 						console.log('Successfully uploaded the updates in S3 for ' + name);
 						updates.log += 'Successfully uploaded the updates in S3 for ' + name + '\n';
 						updates.lists.push(name);
-						updates[name] = {'added': rulesAdded, 'removed': rulesRemoved};
+						updates[name] = {'added': rulesAdded, 'deleted': rulesDeleted};
 						callback();
 					}
 				});
@@ -48,34 +48,45 @@ function uploadChanges(name, newList, differences, callback) {
 
 module.exports = {
 	getUpdates: function(callback) {
-		console.log('Let\'s update the lists...');
-		updates = {'log': '', 'lists': []};
-		async.each(listsManager.getList(), function(list, cb) {
-			request(list.url, function (error, response, listFromTheInternet) {
-				if (!error && response.statusCode === 200) {
-					awsManager.downloadOldList(list.name, function(errDownload, data) {
-						if (errDownload) {
-							console.log(updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found');
-							updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found\n';
-							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet), cb);
-						} else {
-							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists(data.Body.toString(), listFromTheInternet), cb);
-						}
-					});
-				} else {
-					console.log('Error downloading the list ' + list.name);
-					updates.log += 'Error downloading the list ' + list.name + '\n';
-					cb(updates.log);
+		// console.log('Let\'s update the lists...');
+		// updates = {'log': ''};
+		// async.each(listsManager.getList(), function(list, cb) {
+		// 	request(list.url, function (error, response, listFromTheInternet) {
+		// 		if (!error && response.statusCode === 200) {
+		// 			awsManager.downloadOldList(list.name, function(errDownload, data) {
+		// 				if (errDownload) {
+		// 					console.log(updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found');
+		// 					updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found\n';
+		// 					uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet), cb);
+		// 				} else {
+		// 					uploadChanges(list.name, listFromTheInternet, listsManager.diffLists(data.Body.toString(), listFromTheInternet), cb);
+		// 				}
+		// 			});
+		// 		} else {
+		// 			console.log('Error downloading the list ' + list.name);
+		// 			updates.log += 'Error downloading the list ' + list.name + '\n';
+		// 			cb(updates.log);
+		// 		}
+		// 	});
+		// }, function(err) {
+		// 	if (err) {
+		// 		callback({'log': err});
+		// 	} else {
+		// 		console.log('All lists have been processed successfully');
+		// 		updates.log += 'All lists have been processed successfully\n';
+		// 		callback(updates);
+		// 	}
+		// });
+		callback({'log': 'test', 'lists': ['AdiosList'], 'AdiosList': { 'added': [], 'deleted': [
+				{
+					'trigger': {
+						'url-filter': 'test'
+					},
+					'action': {
+						'type': 'block'
+					}
 				}
-			});
-		}, function(err) {
-			if (err) {
-				callback({'log': err, 'lists': []});
-			} else {
-				console.log('All lists have been processed successfully');
-				updates.log += 'All lists have been processed successfully\n';
-				callback(updates);
-			}
-		});
+			]
+		}});
 	}
 };

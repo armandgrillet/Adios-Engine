@@ -20,7 +20,7 @@ module.exports = {
 			s3bucket.upload(params, callback);
 		});
 	},
-	uploadUpdates: function(list, rulesAdded, rulesRemoved, callback) {
+	uploadUpdates: function(list, rulesAdded, rulesDeleted, callback) {
 		var now = Date.now();
 		if (rulesAdded.length > 0) {
 			s3bucket.createBucket(function() {
@@ -29,11 +29,11 @@ module.exports = {
 					if (errUploadRulesAdded) {
 						callback(errUploadRulesAdded);
 					} else {
-						if (rulesRemoved.length > 0) {
-							s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_remove.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
-							.send(function(errUploadRulesRemoved) {
-								if (errUploadRulesRemoved) {
-									callback(errUploadRulesRemoved);
+						if (rulesDeleted.length > 0) {
+							s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_delete.json', Body: JSON.stringify(rulesDeleted, null, '\t')})
+							.send(function(errUploadRulesDeleted) {
+								if (errUploadRulesDeleted) {
+									callback(errUploadRulesDeleted);
 								} else {
 									callback();
 								}
@@ -44,11 +44,11 @@ module.exports = {
 					}
 				});
 			});
-		} else if (rulesRemoved.length > 0) {
-			s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_remove.json', Body: JSON.stringify(rulesRemoved, null, '\t')})
-			.send(function(errUploadRulesRemoved) {
-				if (errUploadRulesRemoved) {
-					callback(errUploadRulesRemoved);
+		} else if (rulesDeleted.length > 0) {
+			s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_delete.json', Body: JSON.stringify(rulesDeleted, null, '\t')})
+			.send(function(errUploadRulesDeleted) {
+				if (errUploadRulesDeleted) {
+					callback(errUploadRulesDeleted);
 				} else {
 					callback();
 				}
