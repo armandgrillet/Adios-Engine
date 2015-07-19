@@ -85,34 +85,13 @@ function commit(operations, operationNumber) {
 	});
 }
 
-
 var maxOperationsPerBatch = 190;
 function update(updates, operations, operationType, currentList, currentUpdate) {
-	if (operationType === 'create') {
-		var modifications = updates[updates.lists[currentList]]; // We're getting the current list because adding rules is synchrnous so we'll do everything at once.
-		var modif;
-		for (modif in modifications.added) { // For each rule.
-			if (currentUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
-				operations.push(container.publicCloudDatabase.newRecordsBatch());
-			}
-			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].create(constructRule('create', updates.lists[currentList], modifications.added[modif])); // Adding the rule to the batch.
-			currentUpdate++;
-		}
-
-		if (modifications.deleted !== undefined) { // There is rules to delete, let's do it.
-			update(updates, operations, 'delete', currentList, currentUpdate);
-		} else if (currentList < (updates.lists.length - 1)) { // There is other lists.
-			if (updates.lists[currentList + 1].added !== undefined) { // In the next list we need to add rules.
-				update(updates, operations, 'create', (currentList + 1), currentUpdate);
-			} else { // We need to remove rules in the next list.
-				update(updates, operations, 'delete', (currentList + 1), currentUpdate);
-			}
-		} else {
-			commit(operations, 0); // No more rules, we commit.
-		}
-	} else if (operationType === 'delete') {
+	if (operationType === 'delete') {
 		getRule(updates.lists[currentList], updates[updates.lists[currentList]].deleted[currentUpdate], function(name) { // We're getting the record's name of the rule to delete.
+			console.log('On a la règle avec nom ' + name);
 			if (currentUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
+				console.log('On créer le batch');
 				operations.push(container.publicCloudDatabase.newRecordsBatch());
 			}
 			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].delete({ recordName: name }); // Adding the rule to delete to the bach, it's a really simple record with just the record's name.
@@ -120,15 +99,39 @@ function update(updates, operations, operationType, currentList, currentUpdate) 
 			if (currentUpdate < updates[updates.lists[currentList]].deleted.length) { // Still rules to delete
 				update(updates, operations, 'delete', currentList, currentUpdate);
 			} else {
-				if (updates[updates.lists[currentList + 1]].added !== undefined) {
-					update(updates, operations, 'create', (currentList + 1), currentUpdate);
-				} else if (currentList < (updates.lists.length - 1)) {
-					update(updates, operations, 'delete', (currentList + 1), currentUpdate);
+				if (modifications.created !== undefined) { // There is rules to add, let's do it.
+					update(updates, operations, 'create', currentList, currentUpdate);
+				} else if (currentList < (updates.lists.length - 1)) { // There is other lists.
+					if (updates[updates.lists[currentList + 1]].deleted !== undefined) {
+						update(updates, operations, 'delete', (currentList + 1), currentUpdate);
+					} else {
+						update(updates, operations, 'create', (currentList + 1), currentUpdate);
+					}
 				} else {
 					commit(operations, 0);
 				}
 			}
 		});
+	} else if (operationType === 'create') {
+		var modifications = updates[updates.lists[currentList]]; // We're getting the current list because adding rules is synchrnous so we'll do everything at once.
+		var modif;
+		for (modif in modifications.created) { // For each rule.
+			if (currentUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
+				operations.push(container.publicCloudDatabase.newRecordsBatch());
+			}
+			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].create(constructRule('create', updates.lists[currentList], modifications.created[modif])); // Adding the rule to the batch.
+			currentUpdate++;
+		}
+
+		if (currentList < (updates.lists.length - 1)) { // There is other lists.
+			if (updates.lists[currentList + 1].deleted !== undefined) { // In the next list we need to add rules.
+				update(updates, operations, 'delete', (currentList + 1), currentUpdate);
+			} else { // We need to remove rules in the next list.
+				update(updates, operations, 'create', (currentList + 1), currentUpdate);
+			}
+		} else {
+			commit(operations, 0); // No more rules, we commit.
+		}
 	}
 }
 
@@ -138,11 +141,12 @@ function getUpdates() {
 		if (xmlHttp.readyState === 4 && (xmlHttp.status === 200 || xmlHttp.status === 0)) {
 			var updates = JSON.parse(xmlHttp.responseText);
 			document.getElementById('log').innerText = updates.log;
+			console.log(updates.list);
 			if (updates.lists !== undefined) {
-				if (updates.lists[0].added !== undefined) {
-					update(updates, [], 'create', 0, 0);
-				} else {
+				if (updates[updates.lists[0]].deleted !== undefined) {
 					update(updates, [], 'delete', 0, 0);
+				} else {
+					update(updates, [], 'create', 0, 0);
 				}
 			}
 		}

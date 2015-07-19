@@ -20,14 +20,14 @@ module.exports = {
 			s3bucket.upload(params, callback);
 		});
 	},
-	uploadUpdates: function(list, rulesAdded, rulesDeleted, callback) {
+	uploadUpdates: function(list, rulesCreated, rulesDeleted, callback) {
 		var now = Date.now();
-		if (rulesAdded.length > 0) {
+		if (rulesCreated.length > 0) {
 			s3bucket.createBucket(function() {
-				s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_add.json', Body: JSON.stringify(rulesAdded, null, '\t')})
-				.send(function(errUploadRulesAdded) {
-					if (errUploadRulesAdded) {
-						callback(errUploadRulesAdded);
+				s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_create.json', Body: JSON.stringify(rulesCreated, null, '\t')})
+				.send(function(errUploadRulesCreated) {
+					if (errUploadRulesCreated) {
+						callback(errUploadRulesCreated);
 					} else {
 						if (rulesDeleted.length > 0) {
 							s3bucket.upload({Key: process.env.ENVIRONMENT + '/' + list + '/' + now + '_delete.json', Body: JSON.stringify(rulesDeleted, null, '\t')})

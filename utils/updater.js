@@ -10,14 +10,14 @@ var parser = require('./parser');
 var updates;
 
 function uploadChanges(name, newList, differences, callback) {
-	if (differences.added.length === 0 && differences.deleted.length === 0) {
+	if (differences.created.length === 0 && differences.deleted.length === 0) {
 		var now = new Date();
 		console.log(name + ' didn\'t changed (' + now + ')');
 		updates.log += name + ' didn\'t changed (' + now + ')\n';
 		callback();
 	} else {
-		console.log(name + ' changed: ' + differences.added.length + ' rules added and ' + differences.deleted.length + ' rules deleted');
-		updates.log += name + ' changed: ' + differences.added.length + ' rules added and ' + differences.deleted.length + ' rules deleted\n';
+		console.log(name + ' changed: ' + differences.created.length + ' rules created and ' + differences.deleted.length + ' rules deleted');
+		updates.log += name + ' changed: ' + differences.created.length + ' rules created and ' + differences.deleted.length + ' rules deleted\n';
 		awsManager.uploadNewList(name, newList, function(errUpload) {
 			if (errUpload) {
 				console.log('Error uploading rules/' + name + '.txt');
@@ -26,9 +26,9 @@ function uploadChanges(name, newList, differences, callback) {
 			} else {
 				console.log('Successfully uploaded rules/' + name + '.txt');
 				updates.log += 'Successfully uploaded rules/' + name + '.txt\n';
-				var rulesAdded = parser.parseRules(differences.added);
+				var rulesCreated = parser.parseRules(differences.created);
 				var rulesDeleted = parser.parseRules(differences.deleted);
-				awsManager.uploadUpdates(name, rulesAdded, rulesDeleted, function(errUploadUpdates) {
+				awsManager.uploadUpdates(name, rulesCreated, rulesDeleted, function(errUploadUpdates) {
 					if (errUploadUpdates) {
 						console.log(errUploadUpdates);
 						updates.log += errUploadUpdates + '\n';
@@ -37,7 +37,7 @@ function uploadChanges(name, newList, differences, callback) {
 						console.log('Successfully uploaded the updates in S3 for ' + name);
 						updates.log += 'Successfully uploaded the updates in S3 for ' + name + '\n';
 						updates.lists.push(name);
-						updates[name] = {'added': rulesAdded, 'deleted': rulesDeleted};
+						updates[name] = {'deleted': rulesDeleted, 'created': rulesCreated};
 						callback();
 					}
 				});
@@ -77,7 +77,7 @@ module.exports = {
 		// 		callback(updates);
 		// 	}
 		// });
-		callback({'log': 'test', 'lists': ['AdiosList'], 'AdiosList': { 'added': [], 'deleted': [
+		callback({'log': 'test', 'lists': ['AdiosList'], 'AdiosList': { 'deleted': [
 				{
 					'trigger': {
 						'url-filter': 'test'
@@ -86,7 +86,7 @@ module.exports = {
 						'type': 'block'
 					}
 				}
-			]
+			], 'created': []
 		}});
 	}
 };

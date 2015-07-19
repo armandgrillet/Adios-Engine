@@ -3,13 +3,13 @@ var diff = require('diff');
 
 module.exports = {
 	diffLists: function(oldList, newList) {
-		var diffList = {'added': [], 'deleted': []};
+		var diffList = {'created': [], 'deleted': []};
 		if (oldList !== '') {
 			var differences = diff.diffLines(oldList, newList);
 			for (var i = 0; i < differences.length; i++) {
 				if (differences[i].value[0] !== '!') {
-					if (differences[i].added === true) {
-						diffList.added.push(differences[i].value.replace('\n', ''));
+					if (differences[i].created === true) {
+						diffList.created.push(differences[i].value.replace('\n', ''));
 					} else if (differences[i].deleted === true) {
 						diffList.deleted.push(differences[i].value.replace('\n', ''));
 					}
@@ -19,7 +19,7 @@ module.exports = {
 				}
 			}
 		} else {
-			return {'added': newList.split('\n'), 'deleted': []};
+			return {'created': newList.split('\n'), 'deleted': []};
 		}
 	},
 	getList: function() {

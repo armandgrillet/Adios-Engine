@@ -16,7 +16,7 @@ exports.testDiffOne = function(test){
 			}
 			var differences = listsManager.diffLists(listOne, listTwo);
 			console.log(differences);
-			test.equal(differences.added[0], '&adserve=');
+			test.equal(differences.created[0], '&adserve=');
 			test.equal(differences.deleted[0], '&ad_network_');
 			test.equal(differences.deleted[1], '&adserver=');
 			test.equal(differences.deleted[2], '&adType=PREROLL&');
