@@ -77,16 +77,9 @@ module.exports = {
 		// 		callback(updates);
 		// 	}
 		// });
-		callback({'log': 'test', 'lists': ['AdiosList'], 'AdiosList': { 'deleted': [
-				{
-					'trigger': {
-						'url-filter': 'test'
-					},
-					'action': {
-						'type': 'block'
-					}
-				}
-			], 'created': []
+		callback({'log': 'test', 'lists': ['AdiosList'], 'AdiosList': {
+			'deleted': [{ 'trigger': { 'url-filter': 'test2' }, 'action': { 'type': 'block' }}, { 'trigger': { 'url-filter': 'test3' }, 'action': { 'type': 'block' }}],
+			'created': []
 		}});
 	}
 };

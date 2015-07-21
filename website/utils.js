@@ -92,7 +92,6 @@ function getRule(listName, data, callback) {
 			if (records.length !== 1) {
 				document.getElementById('log').innerText += records.length + ' records found for ' + data + '\n';
 			} else {
-				console.log(records[0]);
 				callback(records[0].recordName, records[0].recordChangeTag);
 			}
 		}
@@ -131,7 +130,7 @@ function update(updates, operations, operationType, currentList, currentUpdate) 
 				if (updates[updates.lists[currentList]].created !== undefined) { // There is rules to add, let's do it.
 					update(updates, operations, 'create', currentList, currentUpdate);
 				} else if (currentList < (updates.lists.length - 1)) { // There is other lists.
-					if (updates[updates.lists[currentList + 1]].deleted !== undefined) {
+					if (updates[updates.lists[currentList + 1]].deleted.length > 0) {
 						update(updates, operations, 'delete', (currentList + 1), currentUpdate);
 					} else {
 						update(updates, operations, 'create', (currentList + 1), currentUpdate);
@@ -153,7 +152,7 @@ function update(updates, operations, operationType, currentList, currentUpdate) 
 		}
 
 		if (currentList < (updates.lists.length - 1)) { // There is other lists.
-			if (updates.lists[currentList + 1].deleted !== undefined) { // In the next list we need to add rules.
+			if (updates.lists[currentList + 1].deleted.length > 0) { // In the next list we need to delete rules.
 				update(updates, operations, 'delete', (currentList + 1), currentUpdate);
 			} else { // We need to remove rules in the next list.
 				update(updates, operations, 'create', (currentList + 1), currentUpdate);
@@ -170,9 +169,8 @@ function getUpdates() {
 		if (xmlHttp.readyState === 4 && (xmlHttp.status === 200 || xmlHttp.status === 0)) {
 			var updates = JSON.parse(xmlHttp.responseText);
 			document.getElementById('log').innerText = updates.log;
-			console.log(updates.list);
 			if (updates.lists !== undefined) {
-				if (updates[updates.lists[0]].deleted !== undefined) {
+				if (updates[updates.lists[0]].deleted.length > 0) {
 					update(updates, [], 'delete', 0, 0);
 				} else {
 					update(updates, [], 'create', 0, 0);
