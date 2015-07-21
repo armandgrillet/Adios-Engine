@@ -10,61 +10,90 @@ function hideUpdater() {
 	document.getElementById('update').style.display = 'none';
 }
 
-function constructRule(action, listName, data) {
-	var rule = { recordType: 'Rules' };
-	var fieldsValue = {
-		ActionType: { value: data.action.type },
-		TriggerFilter: { value: data.trigger['url-filter'] },
-		List: { value: { recordName: listName, action: 'DELETE_SELF' }}
+function createRule(action, listName, data) {
+	var rule = {
+		recordType: 'Rules',
+		fields: {
+			ActionType: { value: data.action.type },
+			TriggerFilter: { value: data.trigger['url-filter'] },
+			List: {
+				value: { recordName: listName, action: 'DELETE_SELF' }
+			}
+		}
 	};
 
 	if (data.action.selector != null) {
-		fieldsValue.ActionSelector = { value: data.action.selector };
+		rule.fields.ActionSelector = { value: data.action.selector };
 	}
 
 	if (data.trigger['url-filter-is-case-sensitive'] === true) {
-			fieldsValue.TriggerFilterCaseSensitive = { value: 1 };
+		rule.fields.TriggerFilterCaseSensitive = { value: 1 };
 	}
 
 	if (data.trigger['if-domain'] != null) {
-		console.log('If domain: ' + data.trigger['if-domain']);
-		fieldsValue.TriggerIfDomain = { value: data.trigger['if-domain'] };
+		rule.fields.TriggerIfDomain = { value: data.trigger['if-domain'] };
 	}
 
 	if (data.trigger['unless-domain'] != null) {
-		console.log('Unless domain: ' + data.trigger['unless-domain']);
-		fieldsValue.TriggerUnlessDomain = { value: data.trigger['unless-domain'] };
+		rule.fields.TriggerUnlessDomain = { value: data.trigger['unless-domain'] };
 	}
 
 	if (data.trigger['load-type'] != null) {
-		fieldsValue.TriggerLoadType = { value: data.trigger['load-type'] };
+		rule.fields.TriggerLoadType = { value: data.trigger['load-type'] };
 	}
 
 	if (data.trigger['resource-type'] != null) {
-		fieldsValue.TriggerResourceType = { value: data.trigger['resource-type'] };
-	}
-
-	if (action === 'create') {
-		rule.fields = fieldsValue;
-	} else if (action === 'delete') {
-		rule.filterBy = fieldsValue;
+		rule.fields.TriggerResourceType = { value: data.trigger['resource-type'] };
 	}
 
 	console.log(rule);
 	return rule;
 }
 
+function createFilter(filterName, filterValue) {
+	return { comparator: 'EQUALS', fieldName: filterName, fieldValue: { value: filterValue }};
+}
+
 function getRule(listName, data, callback) {
-	var query = constructRule('delete', listName, data);
+	var query = {recordType: 'Rules', filterBy: []};
+	query.filterBy.push(createFilter('ActionType', data.action.type));
+	query.filterBy.push(createFilter('TriggerFilter', data.trigger['url-filter']));
+	query.filterBy.push(createFilter('List', { recordName: listName, action: 'DELETE_SELF' }));
+
+	if (data.action.selector != null) {
+		query.filterBy.push(createFilter('ActionSelector', data.action.selector));
+	}
+
+	if (data.trigger['url-filter-is-case-sensitive'] === true) {
+		query.filterBy.push(createFilter('TriggerFilterCaseSensitive', 1));
+	}
+
+	if (data.trigger['if-domain'] != null) {
+		query.filterBy.push(createFilter('TriggerIfDomain', data.trigger['if-domain']));
+	}
+
+	if (data.trigger['unless-domain'] != null) {
+		query.filterBy.push(createFilter('TriggerUnlessDomain', data.trigger['unless-domain']));
+	}
+
+	if (data.trigger['load-type'] != null) {
+		query.filterBy.push(createFilter('TriggerLoadType', data.trigger['load-type']));
+	}
+
+	if (data.trigger['resource-type'] != null) {
+		query.filterBy.push(createFilter('TriggerResourceType', data.trigger['resource-type']));
+	}
+
 	container.publicCloudDatabase.performQuery(query).then(function(response) {
         if(response.hasErrors) {
           document.getElementById('log').innerText += response.errors[0] + '\n';
         } else {
 			var records = response.records;
 			if (records.length !== 1) {
-				document.getElementById('log').innerText += records.length + ' records found for ' + 'data' + '\n';
+				document.getElementById('log').innerText += records.length + ' records found for ' + data + '\n';
 			} else {
-				callback(records[0].recordName);
+				console.log(records[0]);
+				callback(records[0].recordName, records[0].recordChangeTag);
 			}
 		}
 	});
@@ -88,18 +117,18 @@ function commit(operations, operationNumber) {
 var maxOperationsPerBatch = 190;
 function update(updates, operations, operationType, currentList, currentUpdate) {
 	if (operationType === 'delete') {
-		getRule(updates.lists[currentList], updates[updates.lists[currentList]].deleted[currentUpdate], function(name) { // We're getting the record's name of the rule to delete.
+		getRule(updates.lists[currentList], updates[updates.lists[currentList]].deleted[currentUpdate], function(name, changeTag) { // We're getting the record's name of the rule to delete.
 			console.log('On a la règle avec nom ' + name);
 			if (currentUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
 				console.log('On créer le batch');
 				operations.push(container.publicCloudDatabase.newRecordsBatch());
 			}
-			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].delete({ recordName: name }); // Adding the rule to delete to the bach, it's a really simple record with just the record's name.
+			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].delete({ recordName: name, recordChangeTag: changeTag }); // Adding the rule to delete to the bach, it's a really simple record with just the record's name.
 			currentUpdate++;
 			if (currentUpdate < updates[updates.lists[currentList]].deleted.length) { // Still rules to delete
 				update(updates, operations, 'delete', currentList, currentUpdate);
 			} else {
-				if (modifications.created !== undefined) { // There is rules to add, let's do it.
+				if (updates[updates.lists[currentList]].created !== undefined) { // There is rules to add, let's do it.
 					update(updates, operations, 'create', currentList, currentUpdate);
 				} else if (currentList < (updates.lists.length - 1)) { // There is other lists.
 					if (updates[updates.lists[currentList + 1]].deleted !== undefined) {
@@ -119,7 +148,7 @@ function update(updates, operations, operationType, currentList, currentUpdate) 
 			if (currentUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
 				operations.push(container.publicCloudDatabase.newRecordsBatch());
 			}
-			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].create(constructRule('create', updates.lists[currentList], modifications.created[modif])); // Adding the rule to the batch.
+			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].create(createRule('create', updates.lists[currentList], modifications.created[modif])); // Adding the rule to the batch.
 			currentUpdate++;
 		}
 
