@@ -48,38 +48,34 @@ function uploadChanges(name, newList, differences, callback) {
 
 module.exports = {
 	getUpdates: function(callback) {
-		// console.log('Let\'s update the lists...');
-		// updates = {'log': ''};
-		// async.each(listsManager.getList(), function(list, cb) {
-		// 	request(list.url, function (error, response, listFromTheInternet) {
-		// 		if (!error && response.statusCode === 200) {
-		// 			awsManager.downloadOldList(list.name, function(errDownload, data) {
-		// 				if (errDownload) {
-		// 					console.log(updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found');
-		// 					updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found\n';
-		// 					uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet), cb);
-		// 				} else {
-		// 					uploadChanges(list.name, listFromTheInternet, listsManager.diffLists(data.Body.toString(), listFromTheInternet), cb);
-		// 				}
-		// 			});
-		// 		} else {
-		// 			console.log('Error downloading the list ' + list.name);
-		// 			updates.log += 'Error downloading the list ' + list.name + '\n';
-		// 			cb(updates.log);
-		// 		}
-		// 	});
-		// }, function(err) {
-		// 	if (err) {
-		// 		callback({'log': err});
-		// 	} else {
-		// 		console.log('All lists have been processed successfully');
-		// 		updates.log += 'All lists have been processed successfully\n';
-		// 		callback(updates);
-		// 	}
-		// });
-		callback({'log': 'test', 'lists': ['AdiosList'], 'AdiosList': {
-			'deleted': [{ 'trigger': { 'url-filter': 'test2' }, 'action': { 'type': 'block' }}, { 'trigger': { 'url-filter': 'test3' }, 'action': { 'type': 'block' }}],
-			'created': []
-		}});
+		console.log('Let\'s update the lists...');
+		updates = {'log': ''};
+		async.each(listsManager.getList(), function(list, cb) {
+			request(list.url, function (error, response, listFromTheInternet) {
+				if (!error && response.statusCode === 200) {
+					awsManager.downloadOldList(list.name, function(errDownload, data) {
+						if (errDownload) {
+							console.log(updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found');
+							updates.log += 'Error downloading rules/' + list.name + '.txt on S3: not found\n';
+							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists('', listFromTheInternet), cb);
+						} else {
+							uploadChanges(list.name, listFromTheInternet, listsManager.diffLists(data.Body.toString(), listFromTheInternet), cb);
+						}
+					});
+				} else {
+					console.log('Error downloading the list ' + list.name);
+					updates.log += 'Error downloading the list ' + list.name + '\n';
+					cb(updates.log);
+				}
+			});
+		}, function(err) {
+			if (err) {
+				callback({'log': err});
+			} else {
+				console.log('All lists have been processed successfully');
+				updates.log += 'All lists have been processed successfully\n';
+				callback(updates);
+			}
+		});
 	}
 };

@@ -114,26 +114,28 @@ function commit(operations, operationNumber) {
 }
 
 var maxOperationsPerBatch = 190;
-function update(updates, operations, operationType, currentList, currentUpdate) {
+function update(updates, operations, operationType, currentList, currentUpdate, generalUpdate) {
+	console.log(generalUpdate + ' : ' + currentList + '-' + currentUpdate);
 	if (operationType === 'delete') {
 		getRule(updates.lists[currentList], updates[updates.lists[currentList]].deleted[currentUpdate], function(name, changeTag) { // We're getting the record's name of the rule to delete.
 			console.log('On a la règle avec nom ' + name);
-			if (currentUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
+			if (generalUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
 				console.log('On créer le batch');
 				operations.push(container.publicCloudDatabase.newRecordsBatch());
 			}
-			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].delete({ recordName: name, recordChangeTag: changeTag }); // Adding the rule to delete to the bach, it's a really simple record with just the record's name.
+			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].delete({ recordName: name, recordChangeTag: changeTag }); // Adding the rule to delete to the bach, it's a really simple record with just the record's name.
+			generalUpdate++;
 			currentUpdate++;
 			if (currentUpdate < updates[updates.lists[currentList]].deleted.length) { // Still rules to delete
-				update(updates, operations, 'delete', currentList, currentUpdate);
+				update(updates, operations, 'delete', currentList, currentUpdate, generalUpdate);
 			} else {
-				if (updates[updates.lists[currentList]].created !== undefined) { // There is rules to add, let's do it.
-					update(updates, operations, 'create', currentList, currentUpdate);
+				if (updates[updates.lists[currentList]].created.length > 0) { // There is rules to add, let's do it.
+					update(updates, operations, 'create', currentList, 0, generalUpdate);
 				} else if (currentList < (updates.lists.length - 1)) { // There is other lists.
 					if (updates[updates.lists[currentList + 1]].deleted.length > 0) {
-						update(updates, operations, 'delete', (currentList + 1), currentUpdate);
+						update(updates, operations, 'delete', (currentList + 1), 0, generalUpdate);
 					} else {
-						update(updates, operations, 'create', (currentList + 1), currentUpdate);
+						update(updates, operations, 'create', (currentList + 1), 0, generalUpdate);
 					}
 				} else {
 					commit(operations, 0);
@@ -144,18 +146,21 @@ function update(updates, operations, operationType, currentList, currentUpdate) 
 		var modifications = updates[updates.lists[currentList]]; // We're getting the current list because adding rules is synchrnous so we'll do everything at once.
 		var modif;
 		for (modif in modifications.created) { // For each rule.
-			if (currentUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
+			if (generalUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
 				operations.push(container.publicCloudDatabase.newRecordsBatch());
 			}
-			operations[Math.floor(currentUpdate / maxOperationsPerBatch)].create(createRule('create', updates.lists[currentList], modifications.created[modif])); // Adding the rule to the batch.
-			currentUpdate++;
+			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].create(createRule('create', updates.lists[currentList], modifications.created[modif])); // Adding the rule to the batch.
+			generalUpdate++;
 		}
 
 		if (currentList < (updates.lists.length - 1)) { // There is other lists.
-			if (updates.lists[currentList + 1].deleted.length > 0) { // In the next list we need to delete rules.
-				update(updates, operations, 'delete', (currentList + 1), currentUpdate);
-			} else { // We need to remove rules in the next list.
-				update(updates, operations, 'create', (currentList + 1), currentUpdate);
+			console.log('There is other lists');
+			if (updates[updates.lists[currentList + 1]].deleted.length > 0) { // In the next list we need to delete rules.
+				console.log('We need to delete rules in the next list');
+				update(updates, operations, 'delete', (currentList + 1), 0, generalUpdate);
+			} else { // We need to create rules in the next list.
+				console.log('We need to create rules in the next list');
+				update(updates, operations, 'create', (currentList + 1), 0, generalUpdate);
 			}
 		} else {
 			commit(operations, 0); // No more rules, we commit.
@@ -169,11 +174,12 @@ function getUpdates() {
 		if (xmlHttp.readyState === 4 && (xmlHttp.status === 200 || xmlHttp.status === 0)) {
 			var updates = JSON.parse(xmlHttp.responseText);
 			document.getElementById('log').innerText = updates.log;
+			console.log(updates);
 			if (updates.lists !== undefined) {
 				if (updates[updates.lists[0]].deleted.length > 0) {
-					update(updates, [], 'delete', 0, 0);
+					update(updates, [], 'delete', 0, 0, 0);
 				} else {
-					update(updates, [], 'create', 0, 0);
+					update(updates, [], 'create', 0, 0, 0);
 				}
 			}
 		}
