@@ -36,7 +36,12 @@ function uploadChanges(name, newList, differences, callback) {
 					} else {
 						console.log('Successfully uploaded the updates in S3 for ' + name);
 						updates.log += 'Successfully uploaded the updates in S3 for ' + name + '\n';
-						updates.lists.push(name);
+						if (updates.lists != null) {
+							updates.lists.push(name);
+						} else {
+							updates.lists = [name];
+						}
+						
 						updates[name] = {'deleted': rulesDeleted, 'created': rulesCreated};
 						callback();
 					}
