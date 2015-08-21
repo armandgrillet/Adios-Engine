@@ -1,6 +1,7 @@
 'use strict';
 
 var container;
+var serverUpdate;
 
 function displayUpdater() {
 	document.getElementById('update').style.display = 'block';
@@ -108,6 +109,23 @@ function commit(operations, operationNumber) {
 				document.getElementById('log').innerText += 'Successful upload to CloudKit';
 			} else {
 				commit(operations, operationNumber + 1);
+			}
+		}
+	});
+}
+
+function getUpdateVersion(callback) {
+	var query = {recordType: 'Updates', filterBy: []};
+	//query.filterBy.push(createFilter('recordName', 'TheOneAndOnly'));
+	container.publicCloudDatabase.performQuery(query).then(function(response) {
+        if(response.hasErrors) {
+          document.getElementById('log').innerText += response.errors[0] + '\n';
+        } else {
+			var records = response.records;
+			if (records.length !== 1) {
+				document.getElementById('log').innerText += records.length + ' records found for ' + data + '\n';
+			} else {
+				callback(records[0].fields.Version.value);
 			}
 		}
 	});

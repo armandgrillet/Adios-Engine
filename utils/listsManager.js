@@ -4,26 +4,24 @@ var diff = require('diff');
 module.exports = {
 	diffLists: function(oldList, newList) {
 		var diffList = {'created': [], 'deleted': []};
-		if (oldList !== '') {
-			var differences = diff.diffLines(oldList, newList);
-			for (var i = 0; i < differences.length; i++) {
-				if (differences[i].value[0] !== '!') {
-					if (differences[i].created === true) {
-						diffList.created.push(differences[i].value.replace('\n', ''));
-					} else if (differences[i].deleted === true) {
-						diffList.deleted.push(differences[i].value.replace('\n', ''));
+		let differences = diff.diffLines(oldList, newList);
+		for (let i in differences) {
+			let lines = differences[i].value.split('\n')
+			for (let line of lines) {
+				if (!(line.replace(/\s/g, '').charAt(0) === '[' && line.slice(-1) === ']') && line.length > 0 && line.charAt(0) !== '!' && line.indexOf(' ') === -1) {
+					if (differences[i].added === true) {
+						diffList.created.push(line.replace('\n', ''));
+					} else if (differences[i].removed === true) {
+						diffList.deleted.push(line.replace('\n', ''));
 					}
 				}
-				if (i === differences.length - 1) {
-					return diffList;
-				}
 			}
-		} else {
-			return {'created': newList.split('\n'), 'deleted': []};
 		}
+		console.log(diffList);
+		return diffList;
 	},
 	getList: function() {
-		return [{'name': 'EasyList_Hebrew', 'url': 'https://raw.githubusercontent.com/AdBlockPlusIsrael/EasyListHebrew/master/EasyListHebrew.txt'}];
+		return [{'name': 'AdiosList', 'url': 'http://armand.gr/list.txt'}];
 	},
 	getLists: function() {
 		return [

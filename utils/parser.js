@@ -242,7 +242,7 @@ String.prototype.hasTidle = function() {
 
 module.exports = {
 	isRule: function(line) {
-		if (line.length > 0 && line.charAt(0) !== '!' && line.indexOf(' ') === -1) {
+		if (!(line.replace(/\s/g, '').charAt(0) === '[' && line.slice(-1) === ']') && line.length > 0 && line.charAt(0) !== '!' && line.indexOf(' ') === -1) {
 			return true;
 		}
 		return false;
