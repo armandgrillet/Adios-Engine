@@ -11,24 +11,17 @@ function hideUpdater() {
 	document.getElementById('update').style.display = 'none';
 }
 
-function createRule(action, listName, data) {
-	var rule = {
-		recordType: 'Rules',
-		fields: {
-			ActionType: { value: data.action.type },
-			TriggerFilter: { value: data.trigger['url-filter'] },
-			List: {
-				value: { recordName: listName, action: 'DELETE_SELF' }
-			}
-		}
-	};
+function addDataToRule(rule, data) {
+	rule.fields.ActionType = { value: data.action.type };
 
 	if (data.action.selector != null) {
 		rule.fields.ActionSelector = { value: data.action.selector };
 	}
 
+	rule.fields.TriggerUrlFilter = { value: data.trigger['url-filter'] };
+
 	if (data.trigger['url-filter-is-case-sensitive'] === true) {
-		rule.fields.TriggerFilterCaseSensitive = { value: 1 };
+		rule.fields.TriggerUrlFilterIsCaseSensitive = { value: 1 };
 	}
 
 	if (data.trigger['if-domain'] != null) {
@@ -47,7 +40,37 @@ function createRule(action, listName, data) {
 		rule.fields.TriggerResourceType = { value: data.trigger['resource-type'] };
 	}
 
-	console.log(rule);
+	return rule;
+}
+
+function createDeletedRule(listName, creationUpdate, data) {
+	var deletedRule = {
+		recordType: 'DeletedRules',
+		fields: {
+			CreationUpdate: { value: creationUpdate },
+			Update: { value: (serverUpdate + 1) },
+			List: {
+				value: { recordName: listName, action: 'DELETE_SELF' }
+			}
+		}
+	};
+
+	rule = addDataToRule(rule, data);
+	return rule;
+}
+
+function createRule(listName, data) {
+	var rule = {
+		recordType: 'Rules',
+		fields: {
+			Update: { value: (serverUpdate + 1) },
+			List: {
+				value: { recordName: listName, action: 'DELETE_SELF' }
+			}
+		}
+	};
+
+	rule = addDataToRule(rule, data);
 	return rule;
 }
 
@@ -55,10 +78,26 @@ function createFilter(filterName, filterValue) {
 	return { comparator: 'EQUALS', fieldName: filterName, fieldValue: { value: filterValue }};
 }
 
+function updateVersion(callback) {
+	getUpdateVersion(function(version, changeTag) {
+		var batch = container.publicCloudDatabase.newRecordsBatch();
+		var record = {
+		    recordType: 'Updates',
+		    recordName : 'TheOneAndOnly',
+		    recordChangeTag: changeTag,
+		    fields: { Version: { 'value': version + 1 }}
+		}
+		batch.update(record);
+		batch.commit().then(function(response) {
+			callback();
+		});
+	});
+}
+
 function getRule(listName, data, callback) {
 	var query = {recordType: 'Rules', filterBy: []};
 	query.filterBy.push(createFilter('ActionType', data.action.type));
-	query.filterBy.push(createFilter('TriggerFilter', data.trigger['url-filter']));
+	query.filterBy.push(createFilter('TriggerUrlFilter', data.trigger['url-filter']));
 	query.filterBy.push(createFilter('List', { recordName: listName, action: 'DELETE_SELF' }));
 
 	if (data.action.selector != null) {
@@ -66,7 +105,7 @@ function getRule(listName, data, callback) {
 	}
 
 	if (data.trigger['url-filter-is-case-sensitive'] === true) {
-		query.filterBy.push(createFilter('TriggerFilterCaseSensitive', 1));
+		query.filterBy.push(createFilter('TriggerUrlFilterIsCaseSensitive', 1));
 	}
 
 	if (data.trigger['if-domain'] != null) {
@@ -93,7 +132,7 @@ function getRule(listName, data, callback) {
 			if (records.length !== 1) {
 				document.getElementById('log').innerText += records.length + ' records found for ' + data + '\n';
 			} else {
-				callback(records[0].recordName, records[0].recordChangeTag);
+				callback(records[0].recordName, records[0].fields.Update.value, records[0].recordChangeTag);
 			}
 		}
 	});
@@ -105,8 +144,10 @@ function commit(operations, operationNumber) {
 			document.getElementById('log').innerText += 'Error for operation ' + operationNumber + '\n';
 			document.getElementById('log').innerText += response.errors[0];
 		} else {
-			if (operationNumber === (operations.length - 1)) {
-				document.getElementById('log').innerText += 'Successful upload to CloudKit';
+			if (operationNumber === (operations.length - 1)) { // We're done with this update.
+				updateVersion(function() {
+					document.getElementById('log').innerText += 'Successful upload to CloudKit';
+				});
 			} else {
 				commit(operations, operationNumber + 1);
 			}
@@ -125,17 +166,18 @@ function getUpdateVersion(callback) {
 			if (records.length !== 1) {
 				document.getElementById('log').innerText += records.length + ' records found for ' + data + '\n';
 			} else {
-				callback(records[0].fields.Version.value);
+				serverUpdate = records[0].fields.Version.value;
+				callback(records[0].fields.Version.value, records[0].recordChangeTag);
 			}
 		}
 	});
 }
 
 var maxOperationsPerBatch = 190;
-function update(updates, operations, operationType, currentList, currentUpdate, generalUpdate) {
-	console.log(generalUpdate + ' : ' + currentList + '-' + currentUpdate);
+function update(updates, operations, operationType, currentList, numberOfRulesAlreadyDeleted, generalUpdate) {
 	if (operationType === 'delete') {
-		getRule(updates.lists[currentList], updates[updates.lists[currentList]].deleted[currentUpdate], function(name, changeTag) { // We're getting the record's name of the rule to delete.
+		console.log('We remove one rule');
+		getRule(updates.lists[currentList], updates[updates.lists[currentList]].deleted[numberOfRulesAlreadyDeleted], function(name, creationUpdate, changeTag) { // We're getting the record's name of the rule to delete.
 			console.log('On a la règle avec nom ' + name);
 			if (generalUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
 				console.log('On créer le batch');
@@ -143,9 +185,13 @@ function update(updates, operations, operationType, currentList, currentUpdate, 
 			}
 			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].delete({ recordName: name, recordChangeTag: changeTag }); // Adding the rule to delete to the bach, it's a really simple record with just the record's name.
 			generalUpdate++;
-			currentUpdate++;
-			if (currentUpdate < updates[updates.lists[currentList]].deleted.length) { // Still rules to delete
-				update(updates, operations, 'delete', currentList, currentUpdate, generalUpdate);
+			// If we delete a rule we need to create the DeletedRule.
+			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].create(createDeletedRule(updates.lists[currentList], creationUpdate, modifications.created[modif])); // Adding the rule to the batch.
+			generalUpdate++;
+			numberOfRulesAlreadyDeleted++;
+
+			if (numberOfRulesAlreadyDeleted < updates[updates.lists[currentList]].deleted.length) { // Still rules to delete
+				update(updates, operations, 'delete', currentList, numberOfRulesAlreadyDeleted, generalUpdate);
 			} else {
 				if (updates[updates.lists[currentList]].created.length > 0) { // There is rules to add, let's do it.
 					update(updates, operations, 'create', currentList, 0, generalUpdate);
@@ -167,7 +213,8 @@ function update(updates, operations, operationType, currentList, currentUpdate, 
 			if (generalUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
 				operations.push(container.publicCloudDatabase.newRecordsBatch());
 			}
-			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].create(createRule('create', updates.lists[currentList], modifications.created[modif])); // Adding the rule to the batch.
+
+			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].create(createRule(updates.lists[currentList], modifications.created[modif])); // Adding the rule to the batch.
 			generalUpdate++;
 		}
 
@@ -194,11 +241,14 @@ function getUpdates() {
 			document.getElementById('log').innerText = updates.log;
 			console.log(updates);
 			if (updates.lists !== undefined) {
-				if (updates[updates.lists[0]].deleted.length > 0) {
-					update(updates, [], 'delete', 0, 0, 0);
-				} else {
-					update(updates, [], 'create', 0, 0, 0);
-				}
+				getUpdateVersion(function() {
+					if (updates[updates.lists[0]].deleted.length > 0) {
+						console.log('We have some rules to remove');
+						update(updates, [], 'delete', 0, 0, 0);
+					} else {
+						update(updates, [], 'create', 0, 0, 0);
+					}
+				});
 			}
 		}
 	};
@@ -210,16 +260,11 @@ function init(configuration) {
 	var config = JSON.parse(configuration);
 
 	CloudKit.configure({
-      containers: [{
-
-        // Change this to a container identifier you own.
-        containerIdentifier: config.containerIdentifier,
-
-        // And generate an API token through CloudKit Dashboard.
-        apiToken: config.apiToken,
-
-        environment: config.environment
-      }]
+      	containers: [{
+        	containerIdentifier: config.containerIdentifier,
+        	apiToken: config.apiToken,
+        	environment: config.environment
+      	}]
     });
     container = CloudKit.getDefaultContainer();
     container.setUpAuth();

@@ -4,7 +4,11 @@ var diff = require('diff');
 module.exports = {
 	diffLists: function(oldList, newList) {
 		var diffList = {'created': [], 'deleted': []};
-		let differences = diff.diffLines(oldList, newList);
+		var myDiff = new diff.Diff();
+		myDiff.tokenize = function(value) {
+		  return value.split(/(\n|\r\n)/);
+		};
+		let differences = myDiff.diff(oldList, newList);
 		for (let i in differences) {
 			let lines = differences[i].value.split('\n')
 			for (let line of lines) {
@@ -17,6 +21,15 @@ module.exports = {
 				}
 			}
 		}
+		if (diffList.deleted !== []) {
+			for (let createdRule of diffList.created) {
+				if (diffList.deleted.indexOf(createdRule) > -1) { // The rule is in created and deleted at the same time, we remove it
+					diffList.created.splice(diffList.created.indexOf(createdRule), 1);
+					diffList.deleted.splice(diffList.deleted.indexOf(createdRule), 1);
+				}
+			}
+		}
+		
 		console.log(diffList);
 		return diffList;
 	},

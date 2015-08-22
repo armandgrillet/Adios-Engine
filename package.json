@@ -11,7 +11,7 @@
     "punycode": "latest",
     "jsonfile": "latest",
     "node-fetch": "latest",
-    "diff": "latest",
+    "diff": "2.0.2",
     "ejs": "latest",
     "path": "latest",
     "connect-wwwhisper": "*"
