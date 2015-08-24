@@ -186,7 +186,11 @@ function update(updates, operations, operationType, currentList, numberOfRulesAl
 			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].delete({ recordName: name, recordChangeTag: changeTag }); // Adding the rule to delete to the bach, it's a really simple record with just the record's name.
 			generalUpdate++;
 			// If we delete a rule we need to create the DeletedRule.
-			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].create(createDeletedRule(updates.lists[currentList], creationUpdate, modifications.created[modif])); // Adding the rule to the batch.
+			if (generalUpdate % maxOperationsPerBatch === 0) { // No more than 190 rules per records' batch.
+				console.log('On créer le batch');
+				operations.push(container.publicCloudDatabase.newRecordsBatch());
+			}
+			operations[Math.floor(generalUpdate / maxOperationsPerBatch)].create(createDeletedRule(updates.lists[currentList], creationUpdate, updates[updates.lists[currentList]].deleted[numberOfRulesAlreadyDeleted])); // Adding the rule to the batch.
 			generalUpdate++;
 			numberOfRulesAlreadyDeleted++;
 
@@ -256,6 +260,18 @@ function getUpdates() {
     xmlHttp.send( null );
 }
 
+function gotoAuthenticatedState(userInfo) {
+    container.whenUserSignsOut().then(gotoUnauthenticatedState);
+}
+
+function gotoUnauthenticatedState(error) {
+    if(error && error.ckErrorCode === 'AUTH_PERSIST_ERROR') {
+      	showDialogForPersistError();
+    }
+    
+    container.whenUserSignsIn().then(gotoAuthenticatedState).catch(gotoUnauthenticatedState);
+}
+
 function init(configuration) {
 	var config = JSON.parse(configuration);
 
@@ -263,19 +279,20 @@ function init(configuration) {
       	containers: [{
         	containerIdentifier: config.containerIdentifier,
         	apiToken: config.apiToken,
-        	environment: config.environment
+        	environment: config.environment,
+        	auth: {
+	            persist: true
+	        }
       	}]
     });
     container = CloudKit.getDefaultContainer();
-    container.setUpAuth();
-    container.whenUserSignsIn().then(function(userInfo) {
-		if(userInfo) {
-			displayUpdater();
-		} else {
-			hideUpdater();
-		}
+    container.setUpAuth().then(function(userInfo) {
+      if(userInfo) {
+        gotoAuthenticatedState(userInfo);
+      } else {
+        gotoUnauthenticatedState();
+      }
     });
-    container.whenUserSignsOut().then(hideUpdater);
     document.getElementById('update').onclick = getUpdates;
 }
 
