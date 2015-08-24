@@ -55,8 +55,8 @@ function createDeletedRule(listName, creationUpdate, data) {
 		}
 	};
 
-	rule = addDataToRule(rule, data);
-	return rule;
+	deletedRule = addDataToRule(deletedRule, data);
+	return deletedRule;
 }
 
 function createRule(listName, data) {
