@@ -2,13 +2,13 @@
 var diff = require('diff');
 
 module.exports = {
-	diffLists: function(oldList, newList) {
+	cleanList: function(list) {
 		var diffList = {'created': [], 'deleted': []};
 		var myDiff = new diff.Diff();
 		myDiff.tokenize = function(value) {
 		  return value.split(/(\n|\r\n)/);
 		};
-		let differences = myDiff.diff(oldList, newList);
+		let differences = myDiff.diff('', list);
 		for (let i in differences) {
 			let lines = differences[i].value.split('\n')
 			for (let line of lines) {
@@ -21,20 +21,10 @@ module.exports = {
 				}
 			}
 		}
-		if (diffList.deleted !== []) {
-			for (let createdRule of diffList.created) {
-				if (diffList.deleted.indexOf(createdRule) > -1) { // The rule is in created and deleted at the same time, we remove it
-					diffList.created.splice(diffList.created.indexOf(createdRule), 1);
-					diffList.deleted.splice(diffList.deleted.indexOf(createdRule), 1);
-				}
-			}
-		}
-		
-		console.log(diffList);
-		return diffList;
+		return diffList.created
 	},
 	getList: function() {
-		return [{'name': 'AdiosList', 'url': 'http://armand.gr/list.txt'}];
+		return [{'name': 'EasyList', 'url': 'https://easylist-downloads.adblockplus.org/easylist.txt'}];
 	},
 	getLists: function() {
 		return [
