@@ -60,6 +60,7 @@ function updateVersion(callback) {
 				batch.update(record);
 				batch.commit().then(function(response) {
 					document.getElementById('log').innerText += 'Version updated';
+					callback();
 				});
 			}
 		}
@@ -113,7 +114,7 @@ function createRulesets(update) {
 				recordName: (list + type),
 				recordType: 'Rulesets',
 				fields: {
-					Rules: { value: update[list + type].rules },
+					Rules: { value: update[list + type] },
 					List: {
 						value: { recordName: list, action: 'DELETE_SELF' }
 					}
