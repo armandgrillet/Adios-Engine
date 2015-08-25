@@ -107,38 +107,75 @@ function updateRulesets(update, batch) {
 }
 
 function createRulesets(update) {
-	var batch = container.publicCloudDatabase.newRecordsBatch();
+	var batch = [];
+	var counter = 0;
 	for (var list of update.lists) {
 		for (var type of ['Block', 'BlockCookies', 'CSSDisplayNone', 'IgnorePreviousRules']) {
-			var ruleset = {
-				recordName: (list + type),
-				recordType: 'Rulesets',
-				fields: {
-					Rules: { value: update[list + type] },
-					List: {
-						value: { recordName: list, action: 'DELETE_SELF' }
-					}
+			if (update[list + type].rules === []) {
+				if (counter % 190 === 0) { // No more than 190 rules per records' batch.
+					batch.push(container.publicCloudDatabase.newRecordsBatch());
 				}
-			};
-			batch.create(ruleset);
+				var ruleSet = {
+					recordType: 'Rulesets',
+					fields: {
+						Rules: { value: '' },
+						List: {
+							value: { recordName: list, action: 'DELETE_SELF' }
+						},
+						RulesType: (list + type),
+					}
+				};
+				batch[batch.length - 1].create(ruleSet);
+				counter += 1;
+			} else {
+				while(update[list + type].rules.length) {
+					if (counter % 190 === 0) { // No more than 190 rules per records' batch.
+						batch.push(container.publicCloudDatabase.newRecordsBatch());
+					}
+				    var ruleSet = {
+						recordType: 'Rulesets',
+						fields: {
+							Rules: { value: update[list + type].rules.splice(0, 30).join('CKPByADIOS') },
+							List: {
+								value: { recordName: list, action: 'DELETE_SELF' }
+							},
+							RulesType: { value: (list + type) }
+						}
+					};
+					batch[batch.length - 1].create(ruleSet);
+					counter += 1;
+				}
+			}
 		}
 	}
 	commit(batch);
 }
 
 function commit(batch) {
-	console.log('On commit le btach');
-	console.log(batch);
-	batch.commit().then(function(response) {
-		if(response.hasErrors) {
-			document.getElementById('log').innerText += 'Error for operation ' + list + '\n';
-			document.getElementById('log').innerText += response.errors[0];
-		} else {
-			updateVersion(function() {
-				document.getElementById('log').innerText += 'Successful upload to CloudKit';
-			});
-		}
-	});
+	console.log('Nouvelle op');
+	var operation = batch.pop();
+	if (operation !== undefined) {
+		operation.commit().then(function(response) {
+			if(response.hasErrors) {
+				document.getElementById('log').innerText += 'Error for operation ' + list + '\n';
+				document.getElementById('log').innerText += response.errors[0];
+			} else {
+				if (batch.length > 0) {
+					commit(batch);
+				} else {
+					updateVersion(function() {
+						console.log('Good');
+						document.getElementById('log').innerText += 'Successful upload to CloudKit';
+					});
+				}
+			}
+		});
+	} else {
+		updateVersion(function() {
+			document.getElementById('log').innerText += 'Successful upload to CloudKit';
+		});
+	}
+	
 }
 
 function getUpdates() {

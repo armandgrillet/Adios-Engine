@@ -20,7 +20,7 @@ function getStringRule(rule) {
     stringRule += '}, \"action\": {\"type\": \"' + rule.action.type + '\"';
     
     if (rule.action.selector !== undefined) {
-        stringRule += ',\"selector\": \"" + rule.action.selector + "\"';
+        stringRule += ',\"selector\": \"' + rule.action.selector + '\"';
     }
     
     return stringRule + '}},';

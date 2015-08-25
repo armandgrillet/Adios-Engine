@@ -39,7 +39,7 @@ module.exports = {
 	getUpdates: function(callback) {
 		console.log('Let\'s update the lists...');
 		updates = {'log': ''};
-		async.each(listsManager.getList(), function(list, cb) {
+		async.each(listsManager.getLists(), function(list, cb) {
 			request(list.url, function (error, response, listFromTheInternet) {
 				if (!error && response.statusCode === 200) {
 					awsManager.downloadOldList(list.name, function(errDownload, data) {
