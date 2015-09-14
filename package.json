@@ -1,30 +1,40 @@
 {
-  "name": "adios-parser",
+  "name": "adios-engine",
   "version": "1.0.0",
-  "description": "Parsing the ABP lists and pushing them in ",
+  "description": "ABP rules => Safari content blocker rules",
+  "author": "Armand Grillet <armand.grillet@outlook.com> (http://armand.gr)",
+  "license": "GPL-3.0",
+  "main": "index.js",
   "dependencies": {
-    "aws-sdk": "latest",
-    "dotenv": "latest",
     "express": "latest",
     "request": "latest",
     "async": "latest",
-    "punycode": "latest",
     "jsonfile": "latest",
     "node-fetch": "latest",
     "diff": "2.0.2",
-    "ejs": "latest",
-    "path": "latest",
-    "connect-wwwhisper": "*"
+    "path": "latest"
   },
   "devDependencies": {
+    "babel-eslint": "latest",
     "eslint": "latest",
-    "babel-eslint": "latest"
+    "nodeunit": "^0.9.1"
   },
   "engines": {
-    "iojs": "latest"
+    "node": "latest"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ArmandGrillet/Adios-parser"
-  }
+    "url": "https://github.com/ArmandGrillet/Adios-Engine"
+  },
+  "keywords": [
+    "adblock",
+    "contentblocker",
+    "adios"
+  ],
+  "bugs": {
+    "url": "https://github.com/ArmandGrillet/Adios-Engine/issues"
+  },
+  "scripts": {
+  	"test": "nodeunit tests.js"
+	}
 }

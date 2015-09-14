@@ -1,46 +1,46 @@
 'use strict';
 
-var parser = require('../utils/parser');
+var parser = require('./index');
 
 // Blocking by address parts
 
-exports.testAddressPartBlocksOne = function(test){
-	var regexFromRule = parser.parseRule('/banner/*/img^').trigger['url-filter'];
+exports.testAddressPartBlocksOne = function(test) {
+	var regexFromRule = parser.parseRule('/banner/*/img^')[0].trigger['url-filter'];
 	var url = 'http://example.com/banner/foo/img '; // Bug from Apple, [^a-z\-A-Z0-9._.%] is enough to block the url even if we should add $
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testAddressPartBlocksTwo = function(test){
-	var regexFromRule = parser.parseRule('/banner/*/img^').trigger['url-filter'];
+exports.testAddressPartBlocksTwo = function(test) {
+	var regexFromRule = parser.parseRule('/banner/*/img^')[0].trigger['url-filter'];
 	var url = 'http://example.com/banner/foo/bar/img?param';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testAddressPartBlocksThree = function(test){
-	var regexFromRule = parser.parseRule('/banner/*/img^').trigger['url-filter'];
+exports.testAddressPartBlocksThree = function(test) {
+	var regexFromRule = parser.parseRule('/banner/*/img^')[0].trigger['url-filter'];
 	var url = 'http://example.com/banner//img/foo';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testAddressPartDoesNotBlockOne = function(test){
-	var regexFromRule = parser.parseRule('/banner/*/img^').trigger['url-filter'];
+exports.testAddressPartDoesNotBlockOne = function(test) {
+	var regexFromRule = parser.parseRule('/banner/*/img^')[0].trigger['url-filter'];
 	var url = 'http://example.com/banner/img';
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testAddressPartDoesNotBlockTwo = function(test){
-	var regexFromRule = parser.parseRule('/banner/*/img^').trigger['url-filter'];
+exports.testAddressPartDoesNotBlockTwo = function(test) {
+	var regexFromRule = parser.parseRule('/banner/*/img^')[0].trigger['url-filter'];
 	var url = 'http://example.com/banner/foo/imgraph';
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testAddressPartDoesNotBlockThree = function(test){
-	var regexFromRule = parser.parseRule('/banner/*/img^').trigger['url-filter'];
+exports.testAddressPartDoesNotBlockThree = function(test) {
+	var regexFromRule = parser.parseRule('/banner/*/img^')[0].trigger['url-filter'];
 	var url = 'http://example.com/banner/foo/img.gif';
 	test.equal(url.match(regexFromRule), null);
     test.done();
@@ -48,43 +48,43 @@ exports.testAddressPartDoesNotBlockThree = function(test){
 
 // Address separators
 
-exports.testSeparatorCharactersOne = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testSeparatorCharactersOne = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://ads.example.com/foo.gif';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testSeparatorCharactersTwo = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testSeparatorCharactersTwo = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://server1.ads.example.com/foo.gif';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testSeparatorCharactersThree = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testSeparatorCharactersThree = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'https://ads.example.com:8000/';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testSeparatorCharactersFour = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testSeparatorCharactersFour = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://ads.example.com.ua/foo.gif';
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testSeparatorCharactersFive = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testSeparatorCharactersFive = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://ads.example.com-foo.gif';
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testSeparatorCharactersSix = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testSeparatorCharactersSix = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://example.com/redirect/http://ads.example.com/';
 	test.equal(url.match(regexFromRule), null);
     test.done();
@@ -92,36 +92,36 @@ exports.testSeparatorCharactersSix = function(test){
 
 // Blocking by domain name
 
-exports.testDomainNameBlocksOne = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testDomainNameBlocksOne = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://ads.example.com/foo.gif';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testDomainNameBlocksTwo = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testDomainNameBlocksTwo = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://server1.ads.example.com/foo.gif';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testDomainNameBlocksThree = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testDomainNameBlocksThree = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'https://ads.example.com:8000/';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testDomainNameDoesNotBlockOne = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testDomainNameDoesNotBlockOne = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://ads.example.com.ua/foo.gif';
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testDomainNameDoesNotBlockTwo = function(test){
-	var regexFromRule = parser.parseRule('||ads.example.com^').trigger['url-filter'];
+exports.testDomainNameDoesNotBlockTwo = function(test) {
+	var regexFromRule = parser.parseRule('||ads.example.com^')[0].trigger['url-filter'];
 	var url = 'http://example.com/redirect/http://ads.example.com/';
 	test.equal(url.match(regexFromRule), null);
     test.done();
@@ -129,22 +129,22 @@ exports.testDomainNameDoesNotBlockTwo = function(test){
 
 // Blocking exact address
 
-exports.testExactAddressBlocksOne = function(test){
-	var regexFromRule = parser.parseRule('|http://example.com/|').trigger['url-filter'];
+exports.testExactAddressBlocksOne = function(test) {
+	var regexFromRule = parser.parseRule('|http://example.com/|')[0].trigger['url-filter'];
 	var url = 'http://example.com/';
 	test.notEqual(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testExactAddressDoesNotBlockOne = function(test){
-	var regexFromRule = parser.parseRule('|http://example.com/|').trigger['url-filter'];
+exports.testExactAddressDoesNotBlockOne = function(test) {
+	var regexFromRule = parser.parseRule('|http://example.com/|')[0].trigger['url-filter'];
 	var url = 'http://example.com/foo.gif';
 	test.equal(url.match(regexFromRule), null);
     test.done();
 };
 
-exports.testExactAddressDoesNotBlockTwo = function(test){
-	var regexFromRule = parser.parseRule('|http://example.com/|').trigger['url-filter'];
+exports.testExactAddressDoesNotBlockTwo = function(test) {
+	var regexFromRule = parser.parseRule('|http://example.com/|')[0].trigger['url-filter'];
 	var url = 'http://example.info/redirect/http://example.com/';
 	test.equal(url.match(regexFromRule), null);
     test.done();
@@ -152,79 +152,79 @@ exports.testExactAddressDoesNotBlockTwo = function(test){
 
 // Additional information.
 
-exports.testAdditionalInfoOne = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$domain=~adresult.ch').trigger;
+exports.testAdditionalInfoOne = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$domain=~adresult.ch')[0].trigger['url-filter'];
 	var url = 'http://example.com/banner/foo/img '; // Bug from Apple, [^a-z\-A-Z0-9._.%] is enough to block the url even if we should add $
-	test.notEqual(url.match(parsedRule['url-filter']), null); // We still find the URL
+	test.notEqual(url.match(parsedRule), null); // We still find the URL
     test.done();
 };
 
 
 
-exports.testAdditionalInfoThree = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$domain=~adresult.ch').trigger;
-	test.equal(parsedRule['if-domain'], null);
+exports.testAdditionalInfoThree = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$domain=~adresult.ch')[0].trigger['if-domain'];
+	test.equal(parsedRule, null);
     test.done();
 };
 
-exports.testAdditionalInfoFour = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$domain=~channel4.com|~watchever.de').trigger;
+exports.testAdditionalInfoFour = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$domain=~channel4.com|~watchever.de')[0].trigger;
 	test.equal(parsedRule['unless-domain'][0], '*channel4.com');
 	test.equal(parsedRule['unless-domain'][1], '*watchever.de');
     test.done();
 };
 
-exports.testAdditionalInfoFive = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$domain=channel4.com|watchever.de').trigger;
+exports.testAdditionalInfoFive = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$domain=channel4.com|watchever.de')[0].trigger;
 	test.equal(parsedRule['if-domain'][0], '*channel4.com');
 	test.equal(parsedRule['if-domain'][1], '*watchever.de');
     test.done();
 };
 
-exports.testAdditionalInfoSix = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$script,subdocument,third-party').trigger;
+exports.testAdditionalInfoSix = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$script,subdocument,third-party')[0].trigger;
 	test.equal(parsedRule['resource-type'][0], 'script');
 	test.equal(parsedRule['load-type'][0], 'third-party');
     test.done();
 };
 
-exports.testAdditionalInfoSeven = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$script,subdocument,~third-party').trigger;
+exports.testAdditionalInfoSeven = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$script,subdocument,~third-party')[0].trigger;
 	test.equal(parsedRule['load-type'][0], 'first-party');
     test.done();
 };
 
-exports.testAdditionalInfoEight = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$~script').trigger;
+exports.testAdditionalInfoEight = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$~script')[0].trigger;
 	test.equal(parsedRule['resource-type'][0], 'document');
 	test.equal(parsedRule['resource-type'][1], 'image');
 	test.equal(parsedRule['resource-type'][2], 'style-sheet');
     test.done();
 };
 
-exports.testAdditionalInfoNine = function(test){
-	var parsedRule = parser.parseRule('/banner/*/img^$~script,~image').trigger;
+exports.testAdditionalInfoNine = function(test) {
+	var parsedRule = parser.parseRule('/banner/*/img^$~script,~image')[0].trigger;
 	test.equal(parsedRule['resource-type'][0], 'document');
 	test.equal(parsedRule['resource-type'][1], 'style-sheet');
     test.done();
 };
 
-exports.testAdditionalInfoTen = function(test){
-	var parsedRule = parser.parseRule('*/BannerAd.gif$match-case').trigger;
+exports.testAdditionalInfoTen = function(test) {
+	var parsedRule = parser.parseRule('*/BannerAd.gif$match-case')[0].trigger;
 	test.equal(parsedRule['url-filter-is-case-sensitive'], true);
     test.done();
 };
 
-exports.testActionOne = function(test){
-	var rule = parser.parseRule('/banner/*/img^');
+exports.testActionOne = function(test) {
+	var rule = parser.parseRule('http://example.com/banner/foo/bar/img?param')[0];
 	var url = 'http://example.com/banner/foo/bar/img?param';
 	test.notEqual(url.match(rule.trigger['url-filter']), null);
 	test.equal(rule.action.type, 'block');
     test.done();
 };
 
-exports.testActionTwo = function(test){
-	var rule = parser.parseRule('@@/banner/*/img^');
+exports.testActionTwo = function(test) {
+	var rule = parser.parseRule('@@/banner/*/img^')[0];
 	var url = 'http://example.com/banner/foo/bar/img?param';
 	test.notEqual(url.match(rule.trigger['url-filter']), null);
 	test.equal(rule.action.type, 'ignore-previous-rules');
@@ -233,8 +233,8 @@ exports.testActionTwo = function(test){
 
 // Element hiding
 
-exports.testElementHidingOne = function(test){
-	var rule = parser.parseRule('retrevo.com###pcw_bottom_inner');
+exports.testElementHidingOne = function(test) {
+	var rule = parser.parseRule('retrevo.com###pcw_bottom_inner')[0];
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#pcw_bottom_inner');
 	test.equal(rule.trigger['if-domain'][0], '*retrevo.com');
@@ -242,16 +242,16 @@ exports.testElementHidingOne = function(test){
     test.done();
 };
 
-exports.testElementHidingTwo = function(test){
-	var ifDomains = parser.parseRule('yourmovies.com.au,yourrestaurants.com.au,yourtv.com.au###preheader-ninemsn-container').trigger['if-domain'];
+exports.testElementHidingTwo = function(test) {
+	var ifDomains = parser.parseRule('yourmovies.com.au,yourrestaurants.com.au,yourtv.com.au###preheader-ninemsn-container')[0].trigger['if-domain'];
 	test.equal(ifDomains[0], '*yourmovies.com.au');
 	test.equal(ifDomains[1], '*yourrestaurants.com.au');
 	test.equal(ifDomains[2], '*yourtv.com.au');
     test.done();
 };
 
-exports.testElementHidingThree = function(test){
-	var rule = parser.parseRule('~images.search.yahoo.com,search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child');
+exports.testElementHidingThree = function(test) {
+	var rule = parser.parseRule('~images.search.yahoo.com,search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child')[0];
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.trigger['unless-domain'][0], '*images.search.yahoo.com');
@@ -259,16 +259,16 @@ exports.testElementHidingThree = function(test){
     test.done();
 };
 
-exports.testElementHidingFour = function(test){
-	var rule = parser.parseRule('~search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child');
+exports.testElementHidingFour = function(test) {
+	var rule = parser.parseRule('~search.yahoo.com###right > div > .searchRightMiddle + div[id]:last-child')[0];
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.trigger['unless-domain'][0], '*search.yahoo.com');
     test.done();
 };
 
-exports.testElementHidingFive = function(test){
-	var rule = parser.parseRule('images.search.yahoo.com,~search.yahoo.com#@##right > div > .searchRightMiddle + div[id]:last-child');
+exports.testElementHidingFive = function(test) {
+	var rule = parser.parseRule('images.search.yahoo.com,~search.yahoo.com#@##right > div > .searchRightMiddle + div[id]:last-child')[0];
 	test.equal(rule.action.type, 'css-display-none');
 	test.equal(rule.action.selector, '#right > div > .searchRightMiddle + div[id]:last-child');
 	test.equal(rule.trigger['unless-domain'][0], '*images.search.yahoo.com');
@@ -276,7 +276,7 @@ exports.testElementHidingFive = function(test){
     test.done();
 };
 
-exports.testElementHidingSix = function(test){
+exports.testElementHidingSix = function(test) {
 	var rules = parser.parseRule('savevideo.me,sddt.com,~search.yahoo.com,yahoo.com,youthedesigner.com,yuku.com##.ads');
 	test.equal(rules[0].action.type, 'css-display-none');
 	test.equal(rules[0].action.selector, '.ads');
@@ -299,22 +299,22 @@ exports.testElementHidingSix = function(test){
 
 // Exceptions
 
-exports.testExceptionOne = function(test){
-	var rule = parser.parseRule('@@|http://example.com');
+exports.testExceptionOne = function(test) {
+	var rule = parser.parseRule('@@|http://example.com')[0];
 	test.equal(rule.action.type, 'ignore-previous-rules');
     test.done();
 };
 
-exports.testExceptionTwo = function(test){
-	var rule = parser.parseRule('@@||mongoporn.com^*/adframe/$subdocument');
+exports.testExceptionTwo = function(test) {
+	var rule = parser.parseRule('@@||mongoporn.com^*/adframe/$subdocument')[0];
 	test.equal(rule.action.type, 'ignore-previous-rules');
     test.done();
 };
 
 // Perfect matches for advanced cases
 
-exports.hardTestOne = function(test){
-	var rule = parser.parseRule('|http://*.com^*|*$script,third-party,domain=sporcle.com');
+exports.hardTestOne = function(test) {
+	var rule = parser.parseRule('|http://*.com^*|*$script,third-party,domain=sporcle.com')[0];
 	var expectedResult = {'trigger': { 'url-filter': '^http://.*\\.com[^a-z\\-A-Z0-9._.%].*\\|.*', 'resource-type': ['script'], 'load-type': ['third-party'], 'if-domain': ['*sporcle.com']}, 'action': { 'type': 'block' } };
 	test.equal(rule.trigger['url-filter'], expectedResult.trigger['url-filter']);
 	test.equal(rule.trigger['resource-type'][0], expectedResult.trigger['resource-type'][0]);
@@ -324,13 +324,17 @@ exports.hardTestOne = function(test){
 	test.done();
 };
 
-// Parsing comments
-// exports.testCommentOne = function(test){
-// 	var comment = ('! Version: 201507090501');
-// 	test.equal(parser.isComment(comment), true);
-// 	test.equal(parser.parseComment(comment).key, 'Version');
-// 	test.equal(parser.parseComment(comment).value, '201507090501');
-//     test.done();
-// };
+// Special cases
+exports.wrongRule = function(test) {
+	var rule = parser.parseRule('|http://*.com^*|*$script,third-party,domain=lœç.com');
+	test.equal(rule.length, [].length);
+	test.done();
+};
 
+exports.multipleRules = function(test) {
+	var rules = parser.parseRules(['@@|http://example.com', '@@||mongoporn.com^*/adframe/$subdocument']);
+	test.equal(rules[0].action.type, 'ignore-previous-rules');
+	test.equal(rules[1].action.type, 'ignore-previous-rules');
+	test.done();
+};
 
