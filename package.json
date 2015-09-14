@@ -1,19 +1,10 @@
 {
   "name": "adios-engine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ABP rules => Safari content blocker rules",
   "author": "Armand Grillet <armand.grillet@outlook.com> (http://armand.gr)",
   "license": "GPL-3.0",
   "main": "index.js",
-  "dependencies": {
-    "express": "latest",
-    "request": "latest",
-    "async": "latest",
-    "jsonfile": "latest",
-    "node-fetch": "latest",
-    "diff": "2.0.2",
-    "path": "latest"
-  },
   "devDependencies": {
     "babel-eslint": "latest",
     "eslint": "latest",
