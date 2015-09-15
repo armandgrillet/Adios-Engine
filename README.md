@@ -2,6 +2,8 @@
 
 A small library to transform standard AdBlock Plus rules like [EasyList](https://easylist-downloads.adblockplus.org/easylist.txt) into [rules working in Safari](https://www.webkit.org/blog/3476/content-blockers-first-look/).
 
+## Demo
+You can visit [this website](http://armand.gr/Adios-Engine-Demo/) to try the engine.
 ## Installation
 
 ```
