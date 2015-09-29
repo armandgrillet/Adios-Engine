@@ -4,6 +4,10 @@ A small library to transform standard AdBlock Plus rules like [EasyList](https:/
 
 ## Demo
 You can visit [this website](http://armand.gr/Adios-Engine-Demo/) to try the engine.
+
+## Working example
+If you want to see how to use Adios Engine, check [this project](https://github.com/ArmandGrillet/Adios-Engine-Example).
+
 ## Installation
 
 ```
